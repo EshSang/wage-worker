@@ -1,0 +1,196 @@
+/* WorkerJobs Page Styles */
+
+/* Fade In Up Animation */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Search Input Group */
+.search-input-group {
+    border-radius: 50px;
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.search-input-group:focus-within {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(13, 202, 240, 0.2) !important;
+}
+
+.search-input-group .form-control:focus {
+    box-shadow: none;
+}
+
+/* Job Card Hover Effect */
+.job-card {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 16px !important;
+    overflow: hidden;
+    position: relative;
+}
+
+.job-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: #0dcaf0;
+    transform: scaleY(0);
+    transition: transform 0.3s ease;
+}
+
+.job-card:hover::before {
+    transform: scaleY(1);
+}
+
+.job-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15) !important;
+}
+
+.hover-lift {
+    transition: all 0.3s ease;
+}
+
+/* Badge Animations */
+.badge {
+    transition: all 0.2s ease;
+}
+
+.badge:hover {
+    transform: scale(1.05);
+}
+
+/* Theme Primary Color */
+.theme-primary {
+    color: #0dcaf0 !important;
+}
+
+/* Button Styles */
+.btn-primary, .btn-info {
+    transition: all 0.3s ease;
+    background-color: #0dcaf0 !important;
+    border-color: #0dcaf0 !important;
+}
+
+.btn-primary:hover, .btn-info:hover {
+    transform: translateX(5px);
+    box-shadow: 0 5px 15px rgba(13, 202, 240, 0.4);
+    background-color: #0bb5d6 !important;
+}
+
+.text-info {
+    color: #0dcaf0 !important;
+}
+
+/* Loading Spinner */
+.spinner-border {
+    width: 3rem;
+    height: 3rem;
+}
+
+/* Empty State */
+.text-center .text-muted {
+    font-size: 1.1rem;
+}
+
+/* Job Cards Container */
+.job-cards-container {
+    animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* Skills Badge */
+.badge.bg-secondary {
+    background-color: #e9ecef !important;
+    color: #495057 !important;
+    border: 1px solid #dee2e6;
+}
+
+/* Stats Section */
+.border-start {
+    height: 40px;
+    opacity: 0.5;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .display-4 {
+        font-size: 2rem;
+    }
+
+    .lead {
+        font-size: 1rem;
+    }
+
+    .search-input-group {
+        width: 100% !important;
+    }
+
+    .job-card {
+        margin-bottom: 1rem !important;
+    }
+
+    .d-flex.gap-4 {
+        flex-direction: column;
+        gap: 1rem !important;
+    }
+}
+
+/* Smooth Scroll */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Status Badge Colors */
+.badge.bg-success {
+    background-color: #10b981 !important;
+}
+
+.badge.bg-light {
+    background-color: #f8f9fa !important;
+    border: 1px solid #e9ecef;
+}
+
+/* Category Badge */
+.badge.bg-light.text-dark {
+    font-weight: 500;
+}
+
+/* Footer Border Top */
+.border-top {
+    border-color: #e9ecef !important;
+}
+
+/* Improved Readability */
+.text-muted {
+    color: #6c757d !important;
+}
+
+/* Card Body Spacing */
+.card-body.p-4 {
+    padding: 1.5rem !important;
+}
+
+@media (min-width: 992px) {
+    .card-body.p-4 {
+        padding: 2rem !important;
+    }
+}

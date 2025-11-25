@@ -1,0 +1,10 @@
+@import 'bootstrap/dist/css/bootstrap.min.css';
+@import 'bootstrap-icons/font/bootstrap-icons.css';
+
+
+*{
+  margin-top:0px;
+  margin-left:0px;
+  margin-right:0px;
+  font-family: 'Segoe UI';
+}

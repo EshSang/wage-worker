@@ -1,0 +1,143 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// model UserDetails {
+//   userid      Int     @id @default(autoincrement())
+//   fname       String  @db.VarChar(255)
+//   lname       String  @db.VarChar(255)
+//   phonenumber Int
+//   email       String  @db.VarChar(50)
+//   password    String? @db.VarChar(255)
+//   address     String  @db.VarChar(50)
+//   skills      String  @db.VarChar(50)
+//   about       String  @db.VarChar(255)
+//   usertype    String  @db.VarChar(10)
+
+//   @@map("user_details")
+// }
+
+// model JobCategory {
+//   category_id Int    @id @default(autoincrement())
+//   category    String @db.VarChar(50)
+
+//   @@map("job_category")
+// }
+
+// model AvailableJobs {
+//   job_id               Int      @id @default(autoincrement())
+//   job_title            String   @db.VarChar(255)
+//   job_description      String   @db.VarChar(255)
+//   job_category         String   @db.VarChar(50)
+//   skills               String   @db.VarChar(255)
+//   job_location         String   @db.VarChar(255)
+//   job_posted_date      DateTime @db.Date
+//   customer_name        String   @db.VarChar(255)
+//   customer_address     String   @db.VarChar(255)
+//   customer_phone       Int
+//   hourly               Int
+//   job_status           String   @db.VarChar(20)
+//   submitted_user_email String   @db.VarChar(20)
+
+//   @@map("available_jobs")
+// }
+
+// model Orders {
+//   order_id               Int      @id @default(autoincrement())
+//   submitted_order_id     Int
+//   applied_date           DateTime @db.Date
+//   order_status           String   @db.VarChar(50)
+// }
+
+enum UserType {
+  USER
+  ADMIN
+  REVIEWER
+}
+
+model User {
+  id              Int              @id @default(autoincrement())
+  email           String           @unique @db.VarChar(255)
+  password        String           @db.VarChar(255)
+  fname           String           @db.VarChar(255)
+  lname           String           @db.VarChar(255)
+  phonenumber     String?          @db.VarChar(20)
+  address         String?          @db.VarChar(255)
+  skills          String?          @db.VarChar(255)
+  about           String?          @db.VarChar(500)
+  usertype        UserType         @default(USER)
+  jobApplications JobApplication[]
+  orders          Order[]
+  reviews         Review[]
+  jobs            Job[]
+}
+
+model JobCategory {
+  id       Int    @id @default(autoincrement())
+  category String @db.VarChar(50)
+  jobs     Job[]  @relation("JobCategoryRelation")
+}
+
+model Job {
+  id              Int              @id @default(autoincrement())
+  title           String           @db.VarChar(255)
+  description     String           @db.VarChar(1000)
+  skills          String           @db.VarChar(255)
+  location        String           @db.VarChar(255)
+  postedDate      DateTime         @db.Date
+  hourlyRate      Int
+  status          String           @db.VarChar(50)
+  createdUserId   Int
+  createdUser     User             @relation(fields: [createdUserId], references: [id])
+  categoryId      Int
+  category        JobCategory      @relation("JobCategoryRelation", fields: [categoryId], references: [id])
+  jobApplications JobApplication[]
+  orders          Order[]
+}
+
+model JobApplication {
+  id                Int      @id @default(autoincrement())
+  jobId             Int
+  userId            Int
+  appliedDate       DateTime @db.Date
+  applicationStatus String   @db.VarChar(50)
+  job               Job      @relation(fields: [jobId], references: [id])
+  user              User     @relation(fields: [userId], references: [id])
+  orders            Order[]
+}
+
+model Order {
+  id               Int            @id @default(autoincrement())
+  jobApplicationId Int
+  jobId            Int
+  userId           Int
+  acceptedDate     DateTime       @db.Date
+  status           OrderStatus    @default(PENDING)
+  jobApplication   JobApplication @relation(fields: [jobApplicationId], references: [id])
+  job              Job            @relation(fields: [jobId], references: [id])
+  user             User           @relation(fields: [userId], references: [id])
+  reviews          Review[]
+}
+
+enum OrderStatus {
+  PENDING
+  ACCEPTED
+  COMPLETED
+  CANCELLED
+}
+
+model Review {
+  id         Int      @id @default(autoincrement())
+  orderId    Int
+  reviewerId Int
+  rating     Int
+  comment    String   @db.VarChar(1000)
+  createdAt  DateTime @db.Date
+  order      Order    @relation(fields: [orderId], references: [id])
+  reviewer   User     @relation(fields: [reviewerId], references: [id])
+}

@@ -1,0 +1,167 @@
+/* WorkerViewJob Page Styles */
+
+/* Theme Primary Color */
+.theme-primary {
+    color: #0dcaf0 !important;
+}
+
+/* Job Detail Card Animation */
+.job-detail-card {
+    animation: fadeInUp 0.6s ease;
+    border-radius: 16px !important;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Back Button */
+.back-button {
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.back-button:hover {
+    transform: translateX(-5px);
+    color: #0dcaf0 !important;
+}
+
+/* Section Titles with Accent */
+.section-title {
+    position: relative;
+    padding-left: 20px;
+}
+
+.title-accent {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 4px;
+    height: 24px;
+    background: #0dcaf0;
+    border-radius: 2px;
+}
+
+/* Skill Badges */
+.skill-badge {
+    border: 2px solid #0dcaf0 !important;
+    transition: all 0.3s ease;
+    background-color: rgba(13, 202, 240, 0.1) !important;
+}
+
+.skill-badge:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(13, 202, 240, 0.3);
+}
+
+/* Contact Items */
+.contact-item {
+    padding: 1.5rem;
+    background: rgba(13, 202, 240, 0.05);
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    border: 1px solid transparent;
+}
+
+.contact-item:hover {
+    background: rgba(13, 202, 240, 0.1);
+    border-color: #0dcaf0;
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(13, 202, 240, 0.2);
+}
+
+/* Apply Button */
+.apply-button {
+    transition: all 0.4s ease;
+    background-color: #0dcaf0 !important;
+    border-color: #0dcaf0 !important;
+    border-radius: 50px !important;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 15px rgba(13, 202, 240, 0.3);
+}
+
+.apply-button:hover {
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 8px 25px rgba(13, 202, 240, 0.5);
+    background-color: #0bb5d6 !important;
+}
+
+/* Modal Styles */
+.application-modal .modal-content {
+    border-radius: 20px;
+    border: none;
+    overflow: hidden;
+}
+
+.confirmation-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(13, 202, 240, 0.1);
+}
+
+/* Button Styles */
+.btn-info {
+    background-color: #0dcaf0 !important;
+    border-color: #0dcaf0 !important;
+    transition: all 0.3s ease;
+}
+
+.btn-info:hover {
+    background-color: #0bb5d6 !important;
+    border-color: #0bb5d6 !important;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(13, 202, 240, 0.4);
+}
+
+/* Badge Styles */
+.badge.bg-success {
+    background-color: #10b981 !important;
+}
+
+.badge.bg-light {
+    background-color: #f8f9fa !important;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .job-detail-card .card-body {
+        padding: 1.5rem !important;
+    }
+
+    .section-title {
+        font-size: 1.1rem;
+    }
+
+    .contact-item {
+        padding: 1rem;
+    }
+
+    .apply-button {
+        width: 100%;
+    }
+}
+
+/* Smooth transitions */
+* {
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* HR Styling */
+hr {
+    opacity: 0.1;
+    border-color: #0dcaf0;
+}
