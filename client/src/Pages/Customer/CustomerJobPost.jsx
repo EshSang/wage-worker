@@ -130,10 +130,11 @@ export default function CustomerJobPost() {
 
   return (
     <>
+    <div className="min-vh-100 d-flex flex-column bg-light">
       <TopNavbar />
 
       <div>
-        <Container>
+        <Container className='pb-5 mb-3' >
           <h3>Add Job Details</h3>
           <hr />
 
@@ -330,6 +331,7 @@ export default function CustomerJobPost() {
         pauseOnHover
         theme="colored"
       />
+      </div>
     </>
   );
 }

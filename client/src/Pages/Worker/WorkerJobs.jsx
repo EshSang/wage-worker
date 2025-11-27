@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Card, Button, Form, InputGroup, Badge, Row, Col } from 'react-bootstrap';
-import { GeoAlt, CalendarDate, Briefcase, Search } from 'react-bootstrap-icons';
+import { GeoAlt, CalendarDate, Briefcase, Search, CashStack  } from 'react-bootstrap-icons';
 import { useNavigate } from 'react-router-dom';
 import TopNavbar from '../../Components/TopNavbar';
 import Footer from '../../Components/Footer';
@@ -174,6 +174,15 @@ export default function WorkerJobs() {
                                                         <CalendarDate size={16} className="me-1" />
                                                         {getDaysAgo(job.postedDate)}
                                                     </span>
+                                                    <span className="d-flex align-items-center">
+                                                    <CashStack size={16} className="me-1" />
+                                                    <span>LKR</span>{' '}
+                                                    <span className="ms-1">
+                                                        {/* {job.moneyType === 'Hourly' ? `${job.hourlyRate}/hr` : job.hourlyRate} */}
+                                                        {job.hourlyRate}/hr
+                                                    </span>
+                                                </span>
+
                                                 </div>
                                                 <Button
                                                     variant="info"
