@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { FaArrowLeft, FaMapMarkerAlt, FaRegCalendarAlt, FaBriefcase, FaUser } from "react-icons/fa";
+import { FaArrowLeft, FaMapMarkerAlt, FaRegCalendarAlt, FaBriefcase, FaUser , FaMoneyBillWave } from "react-icons/fa";
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button, Modal, Container, Card, Badge } from "react-bootstrap";
 import { toast, ToastContainer } from 'react-toastify';
@@ -28,7 +28,7 @@ export default function WorkerViewJob() {
     const isJobCreator = job?.createdUser?.email === loggedUserEmail;
 
     const [show, setShow] = useState(false);
-    const [submitting, setSubmitting] = useState(false);
+    const [submitting, setSubmitting] = useState(false); 
 
     const handleApplyJob = async () => {
         setSubmitting(true);
@@ -97,6 +97,10 @@ export default function WorkerViewJob() {
                                         <span className="d-flex align-items-center">
                                             <FaBriefcase size={16} className="me-2 theme-primary" />
                                             {job.category?.category}
+                                        </span>
+                                        <span className="d-flex align-items-center">
+                                            <FaMoneyBillWave  size={16} className="me-2 theme-primary" />
+                                            {job.hourlyRate?.hourlyRate} LKR/hr
                                         </span>
                                     </div>
                                 </div>
