@@ -1,5 +1,6 @@
 import TopNavbar from '../../Components/TopNavbar';
 import React, { useEffect, useState } from 'react';
+import Footer from '../../Components/Footer';
 
 const sampleReviews = [
   { id: 1, name: 'Daniel', rating: 5, text: "Best haircut I've had in the city. They always give the best fades!", date: '16 Dec, 2016' },
@@ -26,13 +27,13 @@ export default function WorkerReviews() {
   // Inline SVG star (filled) and outline star
   const StarFilled = ({ size = 14 }) => (
     <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" focusable="false" className="me-1">
-      <path fill="#F1C40F" d="M12 .587l3.668 7.431L23.6 9.75l-5.8 5.656L19.336 23 12 19.412 4.664 23l1.536-7.594L.4 9.75l7.932-1.732z"/>
+      <path fill="#F1C40F" d="M12 .587l3.668 7.431L23.6 9.75l-5.8 5.656L19.336 23 12 19.412 4.664 23l1.536-7.594L.4 9.75l7.932-1.732z" />
     </svg>
   );
 
   const StarOutline = ({ size = 14 }) => (
     <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" focusable="false" className="me-1">
-      <path fill="#ddd" d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+      <path fill="#ddd" d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
     </svg>
   );
 
@@ -47,21 +48,23 @@ export default function WorkerReviews() {
   const visibleReviews = showAll ? reviews : reviews.slice(0, 4);
 
   return (
-    <div>
+    <div className='bg-light'>
       <TopNavbar />
 
-      <div className="container py-5">
+      <div className="container py-5 bg-light min-vh-100 ">
         <div className="row justify-content-center">
           <div className="col-lg-12">
             {/* Header */}
+ 
             <div className="d-flex justify-content-between align-items-center mb-4">
+              <h3 className="fw-bold mb-4">Reviews</h3>
               {/* <div className="text-center w-100">
                 <h5 className="mb-0">Reviews</h5>
                 <div style={{ height: 3, width: 80, margin: '6px auto 0' }} className="bg-primary rounded"></div>
               </div> */}
               {/* <button className="btn btn-primary ms-3">Write Review</button> */}
             </div>
-
+            
             {/* Reviews list */}
             <div className="list-group ">
               {visibleReviews.map(r => (
@@ -122,6 +125,8 @@ export default function WorkerReviews() {
           }
         `}</style>
       </div>
+      <Footer />
     </div>
+
   );
 }
