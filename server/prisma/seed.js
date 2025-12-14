@@ -37,6 +37,59 @@ async function main() {
   console.log('✅ Database seeding completed successfully!');
 }
 
+// Additional seeding for reviews
+
+async function main() {
+  await prisma.review.createMany({
+    data: [
+      {
+        orderId: 1,
+        reviewerId: 2,
+        rating: 5,
+        comment: 'Excellent service!', 
+        createdAt: new Date()
+      },
+      {
+        orderId: 2,
+        reviewerId: 3,
+        rating: 4,
+        comment: 'Good job, but arrived late',
+        createdAt: new Date()
+      },
+      {
+        orderId: 3,
+        reviewerId: 1,
+        rating: 3,
+        comment: 'Average experience',
+        createdAt: new Date()
+      }
+    ]
+  });
+}
+
+
+
+  // 2️⃣ Create orders
+  // async function main() {
+  //   await prisma.order.createMany({
+  //   data: [
+  //   {
+  //     jobApplicationId:2,
+  //     jobId: 1,
+  //     userId: 2,
+  //     acceptedDate: new Date(),
+  //     status: "PENDING"
+  //   },
+  //   {
+  //     jobApplicationId:2,
+  //     jobId: 1,
+  //     userId: 2,
+  //     acceptedDate: new Date(),
+  //     status: "COMPLETED"
+  //   }
+  //   ]
+  // })};
+
 main()
   .catch((e) => {
     console.error('❌ Error during seeding:', e);
@@ -45,3 +98,11 @@ main()
   .finally(async () => {
     await prisma.$disconnect();
   });
+
+
+
+
+
+// main()
+//   .catch(console.error)
+//   .finally(() => prisma.$disconnect());
