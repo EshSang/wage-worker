@@ -61,8 +61,16 @@ function SigninForm() {
       toast.success("✅ Login Success!");
       login(res.data.token);
 
-      // All users navigate to home page
-      navigate("/home");
+      // Navigate based on user type
+      const userType = res.data.user.usertype;
+      if (userType === "ADMIN") {
+        navigate("/admin/dashboard");
+      } else if (userType === "REVIEWER") {
+        navigate("/reviewer/dashboard");
+      } else {
+        // Default navigation for other user types (USER, etc.)
+        navigate("/home");
+      }
     } catch (err) {
       console.error("❌ Login error:", err);
       console.error("❌ Error response:", err.response?.data);

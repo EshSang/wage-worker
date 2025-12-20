@@ -16,7 +16,20 @@ export const AuthProvider = ({ children }) => {
     const token = localStorage.getItem('token');
     if (token) {
       try {
+        //const decoded = jwtDecode(token);
+
         const decoded = jwtDecode(token);
+
+        // 🔥 Preserve usertype from login response
+        const storedUser = JSON.parse(localStorage.getItem("loginUser")) || {};
+
+        setUser({
+          ...decoded,
+          usertype: storedUser.usertype
+        });
+
+        setIsAuthenticated(true);
+
 
         // Check if token is expired
         if (decoded.exp * 1000 < Date.now()) {

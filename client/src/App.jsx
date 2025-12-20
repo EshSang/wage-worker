@@ -27,7 +27,11 @@ import CustomerPostedJobs from './Pages/Customer/CustomerPostedJobs';
 import CustomerReviews from './Pages/Customer/CustomerReviews';
 import CustomerAnalytics from './Pages/Customer/CustomerAnalytics';
 
+// Admin Pages
+import Dashboard from './Pages/Admin/Dashboard';
 
+// Reviewer Pages
+import ReviewerDashboard from './Pages/Reviewer/ReviewerDashboard';
 
 function App() {
   
@@ -62,6 +66,12 @@ function App() {
             <Route path="/customerpostedjobs" element={<ProtectedRoute><CustomerPostedJobs/></ProtectedRoute>} />
             <Route path="/customerreviews" element={<ProtectedRoute><CustomerReviews/></ProtectedRoute>} />
             <Route path="/customeranalytics" element={<ProtectedRoute><CustomerAnalytics/></ProtectedRoute>} />
+
+            {/* Admin Pages */}
+            <Route path="/admin/dashboard" element={<ProtectedRoute><Dashboard/></ProtectedRoute>} />
+
+            {/* Reviewer Pages */}
+            <Route path="/reviewer/dashboard" element={<ProtectedRoute><ReviewerDashboard/></ProtectedRoute>} />
 
           </Routes>
         </Router>
