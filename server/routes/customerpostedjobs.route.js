@@ -3,6 +3,15 @@ const router = express.Router();
 const jobController = require('../controllers/job.controller');
 const verifyToken = require('../middleware/auth');
 
+
+const customerPostedJobsController = require('../controllers/customerpostedjobs.controller');
+
+//get all posted jobs by customer
+router.get('/', customerPostedJobsController.getAllCustomerPostedJobs);
+
+
+
+
 // All job routes require authentication
 router.use(verifyToken);
 
@@ -20,7 +29,6 @@ router.patch('/:jobId/status', jobController.updateJobStatus);
 
 // Delete a job
 router.delete('/:jobId', jobController.deleteJob);
-
 
 
 

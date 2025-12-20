@@ -99,6 +99,9 @@ function SignupForm() {
                     <Form.Control
                       required
                       type="tel"
+                      maxLength={10}
+                      pattern="[0-9]{10}"
+                      inputMode="numeric"
                       name="phonenumber"
                       placeholder="Phone Number"
                       value={values.phonenumber}
