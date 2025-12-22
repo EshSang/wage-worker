@@ -49,6 +49,7 @@ export default function AdminReports() {
   return (
     <div>
       <TopNavbar />
+      <div className="px-4 py-4 bg-light min-vh-100">
       <Container fluid className="p-4">
         {/* <h4 className="fw-bold mb-4">📊 Reports</h4> */}
         <h4 className="fw-bold mb-4">Reports</h4>
@@ -129,6 +130,7 @@ export default function AdminReports() {
           </Card.Body>
         </Card>
       </Container>
+      </div>
       <Footer />
     </div>
   );
