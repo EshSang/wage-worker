@@ -29,9 +29,18 @@ import CustomerAnalytics from './Pages/Customer/CustomerAnalytics';
 
 // Admin Pages
 import Dashboard from './Pages/Admin/Dashboard';
+import AdminJobs from './Pages/Admin/AdminJobs';
+import AdminOrders from './Pages/Admin/AdminOrders';
+import AdminEarnings from './Pages/Admin/AdminEarnings';
+import AdminReports from './Pages/Admin/AdminReports';
+import AdminSettings from './Pages/Admin/AdminSettings';
 
 // Reviewer Pages
 import ReviewerDashboard from './Pages/Reviewer/ReviewerDashboard';
+import ReviewerJobs from './Pages/Reviewer/ReviewerJobs';
+import ReviewerReports from './Pages/Reviewer/ReviewerReports'; 
+import ReviewerReviewRequest from './Pages/Reviewer/ReviewerReviewRequest';
+import ReviewerHistory from './Pages/Reviewer/ReviewerHistory';
 
 function App() {
   
@@ -69,9 +78,18 @@ function App() {
 
             {/* Admin Pages */}
             <Route path="/admin/dashboard" element={<ProtectedRoute><Dashboard/></ProtectedRoute>} />
+            <Route path="/admin/jobs" element={<ProtectedRoute><AdminJobs/></ProtectedRoute>} />
+            <Route path="/admin/orders" element={<ProtectedRoute><AdminOrders/></ProtectedRoute>} />
+            <Route path="/admin/earnings" element={<ProtectedRoute><AdminEarnings/></ProtectedRoute>} />
+            <Route path="/admin/reports" element={<ProtectedRoute><AdminReports/></ProtectedRoute>} />
+            <Route path="/admin/settings" element={<ProtectedRoute><AdminSettings/></ProtectedRoute>} />
 
             {/* Reviewer Pages */}
             <Route path="/reviewer/dashboard" element={<ProtectedRoute><ReviewerDashboard/></ProtectedRoute>} />
+            <Route path="/reviewer/jobs" element={<ProtectedRoute><ReviewerJobs/></ProtectedRoute>} />
+            <Route path="/reviewer/reports" element={<ProtectedRoute><ReviewerReports/></ProtectedRoute>} />
+            <Route path="/reviewer/reviews" element={<ProtectedRoute><ReviewerReviewRequest/></ProtectedRoute>} />
+            <Route path="/reviewer/history" element={<ProtectedRoute><ReviewerHistory/></ProtectedRoute>} />
 
           </Routes>
         </Router>

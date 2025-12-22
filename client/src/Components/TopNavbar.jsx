@@ -51,10 +51,9 @@ export default function TopNavbar() {
       home: "/admin/dashboard",
       links: [
         { path: "/admin/dashboard", label: "Dashboard" },
-        { path: "/admin/users", label: "Users" },
         { path: "/admin/jobs", label: "Jobs" },
         { path: "/admin/orders", label: "Orders" },
-        { path: "/admin/payments", label: "Payments" },
+        { path: "/admin/earnings", label: "Earnings" },
         { path: "/admin/reports", label: "Reports" },
         { path: "/admin/settings", label: "Settings" },
       ],
@@ -64,9 +63,10 @@ export default function TopNavbar() {
       home: "/reviewer/dashboard",
       links: [
         { path: "/reviewer/dashboard", label: "Dashboard" },
+        { path: "/reviewer/jobs", label: "Jobs" },
         { path: "/reviewer/reviews", label: "Review Requests" },
         { path: "/reviewer/history", label: "History" },
-        { path: "/reviewer/analytics", label: "Analytics" },
+        { path: "/reviewer/reports", label: "Reports" },
       ],
     },
   };
