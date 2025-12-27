@@ -25,4 +25,23 @@ router.get('/worker', analyticsController.getWorkerAnalytics);
  */
 router.get('/worker/report', analyticsController.downloadWorkerReport);
 
+/**
+ * @route   GET /api/analytics/customer
+ * @desc    Get customer analytics data with charts and metrics
+ * @access  Private (Customer)
+ * @query   startDate - Optional start date filter (YYYY-MM-DD)
+ * @query   endDate - Optional end date filter (YYYY-MM-DD)
+ */
+router.get('/customer', analyticsController.getCustomerAnalytics);
+
+/**
+ * @route   GET /api/analytics/customer/report
+ * @desc    Download customer analytics report
+ * @access  Private (Customer)
+ * @query   format - Report format: 'csv' or 'json' (default: csv)
+ * @query   startDate - Optional start date filter (YYYY-MM-DD)
+ * @query   endDate - Optional end date filter (YYYY-MM-DD)
+ */
+router.get('/customer/report', analyticsController.downloadCustomerReport);
+
 module.exports = router;
