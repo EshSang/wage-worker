@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Card, Badge, Button, Row, Col, Modal, Form, Tabs, Tab } from 'react-bootstrap';
-import { FaUser, FaRegCalendarAlt, FaBriefcase, FaEnvelope, FaPhone, FaStar, FaCheckCircle, FaClipboardList } from 'react-icons/fa';
+import { FaUser, FaRegCalendarAlt, FaBriefcase, FaEnvelope, FaPhone, FaStar, FaCheckCircle, FaClipboardList, FaPlayCircle } from 'react-icons/fa';
 import TopNavbar from '../../Components/TopNavbar';
 import Footer from '../../Components/Footer';
 import axiosInstance from '../../api/axios';
@@ -10,6 +10,7 @@ import 'react-toastify/dist/ReactToastify.css';
 export default function CustomerOrders() {
   const [activeTab, setActiveTab] = useState('applications');
   const [applications, setApplications] = useState([]);
+  const [inProgressOrders, setInProgressOrders] = useState([]);
   const [completedOrders, setCompletedOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showReviewModal, setShowReviewModal] = useState(false);
@@ -21,6 +22,7 @@ export default function CustomerOrders() {
 
   useEffect(() => {
     fetchApplicationsForMyJobs();
+    fetchInProgressOrders();
     fetchCompletedOrders();
   }, []);
 
@@ -33,6 +35,17 @@ export default function CustomerOrders() {
     } catch (error) {
       console.error("Error fetching applications:", error);
       setLoading(false);
+    }
+  };
+
+  const fetchInProgressOrders = async () => {
+    try {
+      const response = await axiosInstance.get('/api/orders/customer');
+      console.log("Customer Orders:", response.data);
+      const inProgress = response.data.orders?.filter(order => order.status === 'ACCEPTED') || [];
+      setInProgressOrders(inProgress);
+    } catch (error) {
+      console.error("Error fetching in-progress orders:", error);
     }
   };
 
@@ -141,6 +154,37 @@ export default function CustomerOrders() {
         <Container className="my-4">
           <h2 className="fw-bold mb-4">My Orders</h2>
           <p className="text-muted mb-4">Manage job applications and completed orders</p>
+
+          {/* Summary Cards */}
+          <Row className="mb-4">
+            <Col md={4}>
+              <Card className="border-0 shadow-sm h-100 bg-warning bg-opacity-10">
+                <Card.Body className="text-center">
+                  <FaClipboardList size={40} className="text-warning mb-2" />
+                  <h3 className="fw-bold mb-0">{applications.filter(app => app.applicationStatus === 'APPLIED' || app.applicationStatus === 'PENDING').length}</h3>
+                  <p className="text-muted small mb-0">Pending Customer Acceptance</p>
+                </Card.Body>
+              </Card>
+            </Col>
+            <Col md={4}>
+              <Card className="border-0 shadow-sm h-100 bg-info bg-opacity-10">
+                <Card.Body className="text-center">
+                  <FaPlayCircle size={40} className="text-info mb-2" />
+                  <h3 className="fw-bold mb-0">{inProgressOrders.length}</h3>
+                  <p className="text-muted small mb-0">Accepted / In Progress</p>
+                </Card.Body>
+              </Card>
+            </Col>
+            <Col md={4}>
+              <Card className="border-0 shadow-sm h-100 bg-success bg-opacity-10">
+                <Card.Body className="text-center">
+                  <FaCheckCircle size={40} className="text-success mb-2" />
+                  <h3 className="fw-bold mb-0">{completedOrders.length}</h3>
+                  <p className="text-muted small mb-0">Completed</p>
+                </Card.Body>
+              </Card>
+            </Col>
+          </Row>
 
           <Tabs
             activeKey={activeTab}
@@ -308,6 +352,123 @@ export default function CustomerOrders() {
                   </Card>
                 );
               })}
+                </div>
+              )}
+            </Tab>
+
+            {/* In Progress Orders Tab */}
+            <Tab
+              eventKey="inprogress"
+              title={
+                <span>
+                  <FaPlayCircle className="me-2" />
+                  Accepted / In Progress
+                  {inProgressOrders.length > 0 && (
+                    <Badge bg="info" className="ms-2">{inProgressOrders.length}</Badge>
+                  )}
+                </span>
+              }
+            >
+              {inProgressOrders.length === 0 ? (
+                <Card className="border-0 shadow-sm text-center py-5">
+                  <Card.Body>
+                    <FaPlayCircle size={60} className="text-muted mb-3" />
+                    <h4>No In Progress Orders</h4>
+                    <p className="text-muted">
+                      No workers have started working on your jobs yet.
+                    </p>
+                  </Card.Body>
+                </Card>
+              ) : (
+                <div>
+                  {inProgressOrders.map((order) => {
+                const job = order.job || {};
+                const worker = order.user || {};
+                return (
+                  <Card key={order.id} className="mb-4 border-0 shadow-sm">
+                    <Card.Body className="p-4">
+                      <Row>
+                        <Col md={8}>
+                          <div className="d-flex align-items-center gap-2 mb-3">
+                            <h5 className="mb-0 fw-bold text-info">
+                              <FaBriefcase className="me-2" />
+                              {job.title || 'N/A'}
+                            </h5>
+                            <Badge bg={order.startedDate ? 'primary' : 'info'} className="rounded-pill">
+                              {order.startedDate ? 'In Progress' : 'Accepted'}
+                            </Badge>
+                          </div>
+
+                          {/* Worker Information */}
+                          <div className="mb-3 p-3 bg-light rounded">
+                            <h6 className="fw-bold mb-2">
+                              <FaUser className="me-2" />
+                              Worker Information
+                            </h6>
+                            <div className="row">
+                              <div className="col-md-6">
+                                <div className="small text-muted">Name</div>
+                                <div className="fw-semibold">
+                                  {worker.fname} {worker.lname}
+                                </div>
+                              </div>
+                              <div className="col-md-6">
+                                <div className="small text-muted">
+                                  <FaEnvelope className="me-1" />
+                                  Email
+                                </div>
+                                <div className="fw-semibold">{worker.email}</div>
+                              </div>
+                              <div className="col-md-6 mt-2">
+                                <div className="small text-muted">
+                                  <FaPhone className="me-1" />
+                                  Phone
+                                </div>
+                                <div className="fw-semibold">{worker.phonenumber || 'N/A'}</div>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="d-flex flex-wrap gap-3 text-secondary small">
+                            <span>
+                              <strong>Accepted:</strong>{' '}
+                              {order.acceptedDate
+                                ? new Date(order.acceptedDate).toLocaleDateString()
+                                : 'N/A'}
+                            </span>
+                            {order.startedDate && (
+                              <span>
+                                <strong>Started:</strong>{' '}
+                                {new Date(order.startedDate).toLocaleDateString()}
+                              </span>
+                            )}
+                            <span>
+                              <strong>Hourly Rate:</strong> LKR {job.hourlyRate || 0}
+                            </span>
+                            <span>
+                              <strong>Location:</strong> {job.location || 'N/A'}
+                            </span>
+                          </div>
+                        </Col>
+
+                        <Col md={4} className="d-flex flex-column justify-content-center align-items-end gap-2">
+                          <div className="text-center p-3 bg-info bg-opacity-10 rounded w-100">
+                            <div className="small text-muted mb-2">Order Status</div>
+                            <h5 className="mb-0 text-info">
+                              {order.startedDate ? 'Work in Progress' : 'Waiting to Start'}
+                            </h5>
+                            {order.startedDate && (
+                              <p className="small text-muted mt-2 mb-0">
+                                Worker is currently working on this job
+                              </p>
+                            )}
+                          </div>
+                        </Col>
+                      </Row>
+                    </Card.Body>
+                  </Card>
+                );
+                  })}
                 </div>
               )}
             </Tab>

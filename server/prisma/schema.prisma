@@ -75,6 +75,8 @@ model User {
   orders          Order[]
   reviews         Review[]
   jobs            Job[]
+  earnings        Earning[]        @relation("WorkerEarnings")
+  paymentsGiven   Earning[]        @relation("CustomerPayments")
 }
 
 model JobCategory {
@@ -98,6 +100,7 @@ model Job {
   category        JobCategory      @relation("JobCategoryRelation", fields: [categoryId], references: [id])
   jobApplications JobApplication[]
   orders          Order[]
+  earnings        Earning[]
 }
 
 model JobApplication {
@@ -109,6 +112,7 @@ model JobApplication {
   job               Job       @relation(fields: [jobId], references: [id])
   user              User      @relation(fields: [userId], references: [id])
   orders            Order[]
+  earnings          Earning[]
 }
 
 enum JobStatus {
@@ -134,6 +138,7 @@ model Order {
   job                     Job            @relation(fields: [jobId], references: [id])
   user                    User           @relation(fields: [userId], references: [id])
   reviews                 Review[]
+  earning                 Earning?
 }
 
 enum OrderStatus {
@@ -154,4 +159,26 @@ model Review {
   createdAt    DateTime  @db.Date
   order        Order     @relation(fields: [orderId], references: [id])
   reviewer     User      @relation(fields: [reviewerId], references: [id])
+}
+
+model Earning {
+  id               Int            @id @default(autoincrement())
+  jobApplicationId Int
+  jobId            Int
+  workerId         Int
+  customerId       Int
+  amount           Int
+  earnedDate       DateTime       @default(now()) @db.DateTime
+  paymentGatewayId String?        @db.VarChar(255)
+  status           String         @default("COMPLETED") @db.VarChar(50)
+  orderId          Int?           @unique
+  jobApplication   JobApplication @relation(fields: [jobApplicationId], references: [id])
+  job              Job            @relation(fields: [jobId], references: [id])
+  worker           User           @relation("WorkerEarnings", fields: [workerId], references: [id])
+  customer         User           @relation("CustomerPayments", fields: [customerId], references: [id])
+  order            Order?         @relation(fields: [orderId], references: [id])
+
+  @@index([workerId, earnedDate])
+  @@index([customerId, earnedDate])
+  @@index([jobId])
 }

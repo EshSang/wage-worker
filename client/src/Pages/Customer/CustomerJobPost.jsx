@@ -134,7 +134,7 @@ export default function CustomerJobPost() {
       <TopNavbar />
 
       <div>
-        <Container className='pb-5 mb-3' >
+        <Container className='pb-5 mb-3 pt-5' >
           <h3>Add Job Details</h3>
           <hr />
 

@@ -14,6 +14,27 @@ router.use(authMiddleware);
 router.post('/', orderController.createOrder);
 
 /**
+ * @route   GET /api/orders/worker/earnings
+ * @desc    Get worker earnings summary and detailed list
+ * @access  Private (Worker)
+ */
+router.get('/worker/earnings', orderController.getWorkerEarnings);
+
+/**
+ * @route   GET /api/orders/worker/earnings/monthly
+ * @desc    Get worker earnings by month
+ * @access  Private (Worker)
+ */
+router.get('/worker/earnings/monthly', orderController.getWorkerEarningsByMonth);
+
+/**
+ * @route   GET /api/orders/worker/earnings/by-category
+ * @desc    Get worker earnings by job category
+ * @access  Private (Worker)
+ */
+router.get('/worker/earnings/by-category', orderController.getWorkerEarningsByCategory);
+
+/**
  * @route   GET /api/orders/worker
  * @desc    Get all orders for logged-in worker
  * @access  Private (Worker)

@@ -102,6 +102,7 @@ app.listen(PORT, async () => {
   console.log(`[${new Date().toISOString()}] ========================================`);
   console.log(`[${new Date().toISOString()}] Server running on port ${PORT}`);
   console.log(`[${new Date().toISOString()}] Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`[${new Date().toISOString()}] Worker Earnings Routes: ENABLED`);
   console.log(`[${new Date().toISOString()}] ========================================`);
 
   // Test database connection

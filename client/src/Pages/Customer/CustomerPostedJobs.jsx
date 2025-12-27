@@ -59,7 +59,7 @@ export default function CustomerPostedJobs() {
     <div className="bg-light min-vh-100">
       <TopNavbar />
 
-      <div className="container py-4">
+      <div className="container py-4 min-vh-100">
         {/* Header */}
         {/* <h5 className="fw-bold mb-3">📋 My Posted Jobs</h5> */}
         

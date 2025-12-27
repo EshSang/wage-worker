@@ -235,6 +235,82 @@ class OrderController {
       });
     }
   }
+
+  /**
+   * Get worker earnings summary and detailed earnings
+   * GET /api/orders/worker/earnings
+   * Query params: startDate, endDate, status
+   */
+  async getWorkerEarnings(req, res) {
+    try {
+      const userId = req.user.id;
+      const { startDate, endDate, status } = req.query;
+
+      const filters = {};
+      if (startDate) filters.startDate = startDate;
+      if (endDate) filters.endDate = endDate;
+      if (status) filters.status = status;
+
+      const result = await orderService.getWorkerEarnings(userId, filters);
+
+      res.status(200).json({
+        message: 'Earnings retrieved successfully',
+        ...result,
+      });
+    } catch (error) {
+      console.error('Get worker earnings error:', error);
+      res.status(500).json({
+        message: error.message || 'Failed to retrieve earnings',
+      });
+    }
+  }
+
+  /**
+   * Get worker earnings by month
+   * GET /api/orders/worker/earnings/monthly
+   * Query params: year (optional)
+   */
+  async getWorkerEarningsByMonth(req, res) {
+    try {
+      const userId = req.user.id;
+      const year = req.query.year ? parseInt(req.query.year) : undefined;
+
+      const monthlyEarnings = await orderService.getWorkerEarningsByMonth(userId, year);
+
+      res.status(200).json({
+        message: 'Monthly earnings retrieved successfully',
+        monthlyBreakdown: monthlyEarnings,
+        year: year || new Date().getFullYear(),
+      });
+    } catch (error) {
+      console.error('Get monthly earnings error:', error);
+      res.status(500).json({
+        message: error.message || 'Failed to retrieve monthly earnings',
+      });
+    }
+  }
+
+  /**
+   * Get worker earnings by category
+   * GET /api/orders/worker/earnings/by-category
+   */
+  async getWorkerEarningsByCategory(req, res) {
+    try {
+      const userId = req.user.id;
+
+      const categoryEarnings = await orderService.getWorkerEarningsByCategory(userId);
+
+      res.status(200).json({
+        message: 'Category earnings retrieved successfully',
+        categories: categoryEarnings,
+      });
+    } catch (error) {
+      console.error('Get category earnings error:', error);
+      res.status(500).json({
+        message: error.message || 'Failed to retrieve category earnings',
+      });
+    }
+  }
 }
 
 module.exports = new OrderController();

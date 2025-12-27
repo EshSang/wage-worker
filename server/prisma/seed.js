@@ -37,16 +37,17 @@ async function main() {
   console.log('✅ Database seeding completed successfully!');
 }
 
-// Additional seeding for reviews
-
-async function main() {
+// Additional seeding for reviews (commented out - requires existing orders)
+// Uncomment and run separately after creating orders if needed
+/*
+async function seedReviews() {
   await prisma.review.createMany({
     data: [
       {
         orderId: 1,
         reviewerId: 2,
         rating: 5,
-        comment: 'Excellent service!', 
+        comment: 'Excellent service!',
         createdAt: new Date()
       },
       {
@@ -66,6 +67,7 @@ async function main() {
     ]
   });
 }
+*/
 
 
 

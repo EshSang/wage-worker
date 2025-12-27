@@ -29,7 +29,7 @@ class ApplicationController {
         jobId: parseInt(jobId),
         userId: userId,
         appliedDate: new Date(),
-        applicationStatus: 'Pending'
+        applicationStatus: 'APPLIED'
       });
 
       console.log(`[${new Date().toISOString()}] Application created successfully - ID: ${application.id}`);
