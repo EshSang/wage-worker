@@ -1,4 +1,5 @@
 const reviewService = require('../services/review.service');
+const notificationService = require('../services/notification.service');
 
 class ReviewController {
   /**
@@ -33,6 +34,28 @@ class ReviewController {
       );
 
       console.log(`[${new Date().toISOString()}] Review created successfully - ID: ${review.id}`);
+
+      // Send notification to the worker about receiving a review
+      try {
+        if (review.order && review.order.user && review.reviewer) {
+          const worker = review.order.user;
+          const customer = review.reviewer;
+          const job = review.order.job;
+
+          await notificationService.createNotification(
+            worker.id,
+            'REVIEW_RECEIVED',
+            'New Review Received',
+            `${customer.fname} ${customer.lname} reviewed you with ${rating} stars for "${job.title}"`,
+            review.id,
+            'REVIEW'
+          );
+          console.log(`[${new Date().toISOString()}] Notification sent to worker (User ID: ${worker.id})`);
+        }
+      } catch (notificationError) {
+        console.error(`[${new Date().toISOString()}] Notification creation error:`, notificationError);
+        // Continue even if notification fails - review is already created
+      }
 
       res.status(201).json({
         message: 'Review submitted successfully',

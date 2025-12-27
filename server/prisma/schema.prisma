@@ -60,6 +60,18 @@ enum UserType {
   REVIEWER
 }
 
+enum NotificationType {
+  ORDER_ACCEPTED
+  ORDER_STARTED
+  ORDER_COMPLETED
+  PAYMENT_RECEIVED
+  FEEDBACK_RECEIVED
+  APPLICATION_ACCEPTED
+  APPLICATION_REJECTED
+  JOB_APPLIED
+  REVIEW_RECEIVED
+}
+
 model User {
   id              Int              @id @default(autoincrement())
   email           String           @unique @db.VarChar(255)
@@ -77,6 +89,7 @@ model User {
   jobs            Job[]
   earnings        Earning[]        @relation("WorkerEarnings")
   paymentsGiven   Earning[]        @relation("CustomerPayments")
+  notifications   Notification[]
 }
 
 model JobCategory {
@@ -181,4 +194,20 @@ model Earning {
   @@index([workerId, earnedDate])
   @@index([customerId, earnedDate])
   @@index([jobId])
+}
+
+model Notification {
+  id          Int              @id @default(autoincrement())
+  userId      Int
+  user        User             @relation(fields: [userId], references: [id])
+  type        NotificationType
+  title       String           @db.VarChar(255)
+  message     String           @db.VarChar(1000)
+  relatedId   Int?
+  relatedType String?          @db.VarChar(50)
+  isRead      Boolean          @default(false)
+  createdAt   DateTime         @default(now()) @db.DateTime
+
+  @@index([userId, isRead])
+  @@index([createdAt])
 }

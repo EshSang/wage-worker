@@ -1,5 +1,8 @@
 const applicationService = require('../services/application.service');
 const orderService = require('../services/order.service');
+const notificationService = require('../services/notification.service');
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
 
 class ApplicationController {
   /**
@@ -33,6 +36,34 @@ class ApplicationController {
       });
 
       console.log(`[${new Date().toISOString()}] Application created successfully - ID: ${application.id}`);
+
+      // Get job and applicant details for notification
+      try {
+        const job = await prisma.job.findUnique({
+          where: { id: parseInt(jobId) },
+          include: { createdUser: true }
+        });
+
+        const applicant = await prisma.user.findUnique({
+          where: { id: userId }
+        });
+
+        if (job && applicant) {
+          // Create notification for the job poster (customer)
+          await notificationService.createNotification(
+            job.createdUserId,
+            'JOB_APPLIED',
+            'New Job Application',
+            `${applicant.fname} ${applicant.lname} applied for "${job.title}"`,
+            application.id,
+            'APPLICATION'
+          );
+          console.log(`[${new Date().toISOString()}] Notification sent to customer (User ID: ${job.createdUserId})`);
+        }
+      } catch (notificationError) {
+        console.error(`[${new Date().toISOString()}] Notification creation error:`, notificationError);
+        // Continue even if notification fails - application is already created
+      }
 
       res.status(201).json({
         message: "Application submitted successfully",

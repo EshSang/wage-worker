@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Navbar, Nav, Container, Form } from "react-bootstrap";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import ProfileModal from "./ProfileModal";
+import NotificationBell from "./NotificationBell";
 
 export default function TopNavbar() {
   const location = useLocation();
@@ -159,6 +160,9 @@ export default function TopNavbar() {
                   <span className="small text-muted">Worker</span>
                 </div>
               )}
+
+              {/* NOTIFICATION BELL */}
+              <NotificationBell />
 
               {/* PROFILE */}
               <div className="d-flex align-items-center">
