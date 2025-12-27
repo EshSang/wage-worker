@@ -6,6 +6,7 @@ const jobRoutes = require('./job.routes');
 const categoryRoutes = require('./category.routes');
 const applicationRoutes = require('./application.routes');
 const orderRoutes = require('./order.routes');
+const reviewRoutes = require('./review.routes');
 
 // Mount routes
 router.use('/auth', authRoutes);
@@ -13,6 +14,7 @@ router.use('/jobs', jobRoutes);
 router.use('/categories', categoryRoutes);
 router.use('/applications', applicationRoutes);
 router.use('/orders', orderRoutes);
+router.use('/reviews', reviewRoutes);
 
 // Health check
 router.get('/healthcheck', (req, res) => {

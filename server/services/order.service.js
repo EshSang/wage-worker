@@ -168,6 +168,7 @@ class OrderService {
           },
         },
         jobApplication: true,
+        reviews: true, // Include reviews if exist
       },
       orderBy: {
         acceptedDate: 'desc',

@@ -144,12 +144,14 @@ enum OrderStatus {
 }
 
 model Review {
-  id         Int      @id @default(autoincrement())
-  orderId    Int
-  reviewerId Int
-  rating     Int
-  comment    String   @db.VarChar(1000)
-  createdAt  DateTime @db.Date
-  order      Order    @relation(fields: [orderId], references: [id])
-  reviewer   User     @relation(fields: [reviewerId], references: [id])
+  id           Int       @id @default(autoincrement())
+  orderId      Int
+  reviewerId   Int
+  rating       Int
+  comment      String    @db.VarChar(1000)
+  workerReply  String?   @db.VarChar(1000)
+  repliedAt    DateTime? @db.Date
+  createdAt    DateTime  @db.Date
+  order        Order     @relation(fields: [orderId], references: [id])
+  reviewer     User      @relation(fields: [reviewerId], references: [id])
 }

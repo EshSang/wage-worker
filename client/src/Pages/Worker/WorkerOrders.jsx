@@ -10,6 +10,7 @@ export default function WorkerOrders() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showStartModal, setShowStartModal] = useState(false);
+  const [showCompleteModal, setShowCompleteModal] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
 
@@ -40,6 +41,16 @@ export default function WorkerOrders() {
     setSelectedOrder(null);
   };
 
+  const handleShowCompleteModal = (order) => {
+    setSelectedOrder(order);
+    setShowCompleteModal(true);
+  };
+
+  const handleCloseCompleteModal = () => {
+    setShowCompleteModal(false);
+    setSelectedOrder(null);
+  };
+
   const handleStartOrder = async () => {
     if (!selectedOrder) return;
 
@@ -56,6 +67,27 @@ export default function WorkerOrders() {
     } catch (error) {
       console.error("Error starting order:", error);
       toast.error(error.response?.data?.message || "Failed to start order");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleCompleteOrder = async () => {
+    if (!selectedOrder) return;
+
+    setActionLoading(true);
+    try {
+      const response = await axiosInstance.patch(`/api/orders/${selectedOrder.id}/complete`);
+      console.log("Order completed:", response.data);
+
+      toast.success("Order completed successfully!");
+      handleCloseCompleteModal();
+
+      // Refresh orders list
+      fetchWorkerOrders();
+    } catch (error) {
+      console.error("Error completing order:", error);
+      toast.error(error.response?.data?.message || "Failed to complete order");
     } finally {
       setActionLoading(false);
     }
@@ -110,6 +142,11 @@ export default function WorkerOrders() {
   const canStartOrder = (order) => {
     // Can start if order is ACCEPTED and hasn't been started yet
     return order.status === 'ACCEPTED' && !order.startedDate;
+  };
+
+  const canCompleteOrder = (order) => {
+    // Can complete if order is ACCEPTED and has been started
+    return order.status === 'ACCEPTED' && order.startedDate && !order.completedDate;
   };
 
   return (
@@ -284,10 +321,21 @@ export default function WorkerOrders() {
                             </Button>
                           )}
 
-                          {order.status === 'ACCEPTED' && order.startedDate && (
-                            <Badge bg="info" className="px-3 py-2">
-                              Work in Progress
-                            </Badge>
+                          {canCompleteOrder(order) && (
+                            <>
+                              <Badge bg="info" className="px-3 py-2 mb-2">
+                                Work in Progress
+                              </Badge>
+                              <Button
+                                variant="primary"
+                                size="sm"
+                                className="d-flex align-items-center gap-1"
+                                onClick={() => handleShowCompleteModal(order)}
+                              >
+                                <FaCheckCircle size={12} />
+                                Complete Order
+                              </Button>
+                            </>
                           )}
 
                           {order.status === 'COMPLETED' && (
@@ -347,6 +395,57 @@ export default function WorkerOrders() {
               <>
                 <FaPlay className="me-2" />
                 Start Order
+              </>
+            )}
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Complete Order Confirmation Modal */}
+      <Modal show={showCompleteModal} onHide={handleCloseCompleteModal} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Complete Order</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <p>Are you sure you want to mark this order as completed?</p>
+          {selectedOrder && (
+            <div className="bg-light p-3 rounded">
+              <h6 className="fw-bold">{selectedOrder.job?.title}</h6>
+              <p className="text-muted mb-0 small">
+                Customer: {selectedOrder.job?.createdUser?.fname} {selectedOrder.job?.createdUser?.lname}
+              </p>
+              <p className="text-muted mb-0 small">
+                Hourly Rate: LKR {selectedOrder.job?.hourlyRate}
+              </p>
+              {selectedOrder.startedDate && (
+                <p className="text-muted mb-0 small">
+                  Started: {formatDate(selectedOrder.startedDate)}
+                </p>
+              )}
+            </div>
+          )}
+          <p className="text-muted small mt-3">
+            Once marked as completed, the customer will be notified and can proceed with payment and feedback.
+          </p>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={handleCloseCompleteModal} disabled={actionLoading}>
+            Cancel
+          </Button>
+          <Button
+            variant="primary"
+            onClick={handleCompleteOrder}
+            disabled={actionLoading}
+          >
+            {actionLoading ? (
+              <>
+                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                Completing...
+              </>
+            ) : (
+              <>
+                <FaCheckCircle className="me-2" />
+                Complete Order
               </>
             )}
           </Button>
