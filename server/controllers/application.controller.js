@@ -1,4 +1,5 @@
 const applicationService = require('../services/application.service');
+const orderService = require('../services/order.service');
 
 class ApplicationController {
   /**
@@ -135,14 +136,16 @@ class ApplicationController {
     try {
       const { applicationId } = req.params;
       const { status } = req.body;
+      const userId = req.user.id;
 
       // Validation
       if (!status) {
         return res.status(400).json({ message: 'Status is required' });
       }
 
-      const validStatuses = ['Pending', 'Accepted', 'Rejected', 'Withdrawn'];
-      if (!validStatuses.includes(status)) {
+      // Valid JobStatus: PENDING, APPLIED, APPROVED, REJECTED, IN_PROGRESS, COMPLETED
+      const validStatuses = ['PENDING', 'APPLIED', 'APPROVED', 'REJECTED', 'IN_PROGRESS', 'COMPLETED'];
+      if (!validStatuses.includes(status.toUpperCase())) {
         return res.status(400).json({
           message: `Invalid status. Must be one of: ${validStatuses.join(', ')}`
         });
@@ -152,14 +155,44 @@ class ApplicationController {
 
       const updatedApplication = await applicationService.updateApplicationStatus(
         parseInt(applicationId),
-        status
+        status.toUpperCase()
       );
 
       console.log(`[${new Date().toISOString()}] Application updated successfully - ID: ${applicationId}`);
 
+      // If status is "APPROVED", automatically create an Order and reject other applications
+      let order = null;
+      let rejectedCount = 0;
+      if (status.toUpperCase() === 'APPROVED') {
+        try {
+          console.log(`[${new Date().toISOString()}] Creating order for approved application ${applicationId}`);
+          order = await orderService.createOrderFromApplication(parseInt(applicationId), userId);
+          console.log(`[${new Date().toISOString()}] Order created successfully - ID: ${order.id}`);
+        } catch (orderError) {
+          console.error(`[${new Date().toISOString()}] Order creation error:`, orderError);
+          // Continue even if order creation fails - application status is already updated
+        }
+
+        // Reject all other applications for this job
+        try {
+          console.log(`[${new Date().toISOString()}] Rejecting other applications for job ${updatedApplication.jobId}`);
+          const result = await applicationService.rejectOtherApplications(
+            updatedApplication.jobId,
+            parseInt(applicationId)
+          );
+          rejectedCount = result.count;
+          console.log(`[${new Date().toISOString()}] Rejected ${rejectedCount} other applications`);
+        } catch (rejectError) {
+          console.error(`[${new Date().toISOString()}] Error rejecting other applications:`, rejectError);
+          // Continue even if rejection fails
+        }
+      }
+
       res.json({
         message: "Application status updated successfully",
-        application: updatedApplication
+        application: updatedApplication,
+        order: order,
+        rejectedApplications: rejectedCount
       });
 
     } catch (error) {

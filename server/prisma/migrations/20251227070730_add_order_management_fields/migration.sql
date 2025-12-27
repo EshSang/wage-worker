@@ -1,0 +1,5 @@
+-- AlterTable
+ALTER TABLE `order` ADD COLUMN `completedDate` DATE NULL,
+    ADD COLUMN `estimatedCompletionDate` DATE NULL,
+    ADD COLUMN `startedDate` DATE NULL,
+    MODIFY `status` ENUM('PENDING', 'ACCEPTED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED') NOT NULL DEFAULT 'PENDING';

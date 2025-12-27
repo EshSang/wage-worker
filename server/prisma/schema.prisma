@@ -4,9 +4,8 @@ generator client {
 
 datasource db {
   provider = "mysql"
-  //url      = env("DATABASE_URL")
+  url      = env("DATABASE_URL")
 }
-
 
 // model UserDetails {
 //   userid      Int     @id @default(autoincrement())
@@ -102,27 +101,39 @@ model Job {
 }
 
 model JobApplication {
-  id                Int      @id @default(autoincrement())
+  id                Int       @id @default(autoincrement())
   jobId             Int
   userId            Int
-  appliedDate       DateTime @db.Date
-  applicationStatus String   @db.VarChar(50)
-  job               Job      @relation(fields: [jobId], references: [id])
-  user              User     @relation(fields: [userId], references: [id])
+  appliedDate       DateTime  @db.Date
+  applicationStatus JobStatus @default(APPLIED)
+  job               Job       @relation(fields: [jobId], references: [id])
+  user              User      @relation(fields: [userId], references: [id])
   orders            Order[]
 }
 
+enum JobStatus {
+  PENDING
+  APPLIED
+  APPROVED
+  REJECTED
+  IN_PROGRESS
+  COMPLETED
+}
+
 model Order {
-  id               Int            @id @default(autoincrement())
-  jobApplicationId Int
-  jobId            Int
-  userId           Int
-  acceptedDate     DateTime       @db.Date
-  status           OrderStatus    @default(PENDING)
-  jobApplication   JobApplication @relation(fields: [jobApplicationId], references: [id])
-  job              Job            @relation(fields: [jobId], references: [id])
-  user             User           @relation(fields: [userId], references: [id])
-  reviews          Review[]
+  id                      Int            @id @default(autoincrement())
+  jobApplicationId        Int
+  jobId                   Int
+  userId                  Int
+  acceptedDate            DateTime       @db.Date
+  startedDate             DateTime?      @db.Date
+  completedDate           DateTime?      @db.Date
+  estimatedCompletionDate DateTime?      @db.Date
+  status                  OrderStatus    @default(PENDING)
+  jobApplication          JobApplication @relation(fields: [jobApplicationId], references: [id])
+  job                     Job            @relation(fields: [jobId], references: [id])
+  user                    User           @relation(fields: [userId], references: [id])
+  reviews                 Review[]
 }
 
 enum OrderStatus {

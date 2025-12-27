@@ -101,10 +101,10 @@ const CustomerJobs = () => {
   };
 
   return (
-    <div className="min-vh-100 d-flex flex-column bg-light">
+    <div className="min-vh-100 d-flex flex-column bg-light min-vw-100">
       <TopNavbar />
 
-      <Container className="my-4">
+      <Container className="my-4 ">
         {/* ---------------- SEARCH ---------------- */}
         <Row className="mb-3">
           <Col md={6}>

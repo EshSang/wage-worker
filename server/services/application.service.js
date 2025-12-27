@@ -202,6 +202,26 @@ class ApplicationService {
       }
     });
   }
+
+  /**
+   * Reject all other applications for a specific job
+   */
+  async rejectOtherApplications(jobId, approvedApplicationId) {
+    return await prisma.jobApplication.updateMany({
+      where: {
+        jobId: jobId,
+        id: {
+          not: approvedApplicationId
+        },
+        applicationStatus: {
+          in: ['APPLIED', 'PENDING']
+        }
+      },
+      data: {
+        applicationStatus: 'REJECTED'
+      }
+    });
+  }
 }
 
 module.exports = new ApplicationService();

@@ -42,15 +42,18 @@ export default function CustomerOrders() {
   };
 
   const getStatusColor = (status) => {
-    switch(status?.toLowerCase()) {
-      case 'accepted':
+    switch(status?.toUpperCase()) {
+      case 'APPROVED':
+      case 'IN_PROGRESS':
+      case 'COMPLETED':
         return 'success';
-      case 'rejected':
+      case 'REJECTED':
         return 'danger';
-      case 'withdrawn':
-        return 'secondary';
-      default:
+      case 'APPLIED':
+      case 'PENDING':
         return 'warning';
+      default:
+        return 'secondary';
     }
   };
 
@@ -187,25 +190,25 @@ export default function CustomerOrders() {
 
                         {/* Action Buttons */}
                         <Col md={4} className="d-flex flex-column justify-content-center align-items-end gap-2">
-                          {application.applicationStatus === 'Pending' && (
+                          {(application.applicationStatus === 'APPLIED' || application.applicationStatus === 'PENDING') && (
                             <>
                               <Button
                                 variant="success"
                                 className="w-100"
-                                onClick={() => handleUpdateStatus(application.id, 'Accepted')}
+                                onClick={() => handleUpdateStatus(application.id, 'APPROVED')}
                               >
-                                Accept Application
+                                Approve Application
                               </Button>
                               <Button
                                 variant="danger"
                                 className="w-100"
-                                onClick={() => handleUpdateStatus(application.id, 'Rejected')}
+                                onClick={() => handleUpdateStatus(application.id, 'REJECTED')}
                               >
                                 Reject Application
                               </Button>
                             </>
                           )}
-                          {application.applicationStatus !== 'Pending' && (
+                          {application.applicationStatus !== 'APPLIED' && application.applicationStatus !== 'PENDING' && (
                             <div className="text-center p-3 bg-light rounded w-100">
                               <div className="small text-muted">Application Status</div>
                               <h5 className={`mb-0 text-${getStatusColor(application.applicationStatus)}`}>

@@ -5,3 +5,5 @@ node_modules/*
 .env
 server/.env
 client/.env
+.claude/*
+*.lock
