@@ -1,14 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Card, Badge, Button, Row, Col, Modal } from 'react-bootstrap';
+import { Container, Card, Badge, Button, Row, Col, Modal, Tabs, Tab } from 'react-bootstrap';
 import { FaMapMarkerAlt, FaRegCalendarAlt, FaBriefcase, FaPlay, FaCheckCircle, FaHourglassHalf } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import TopNavbar from '../../Components/TopNavbar';
 import Footer from '../../Components/Footer';
+import DirectHireRequestCard from '../../Components/DirectHireRequestCard';
 import axiosInstance from '../../api/axios';
 
 export default function WorkerOrders() {
   const [orders, setOrders] = useState([]);
+  const [directHireRequests, setDirectHireRequests] = useState([]);
+  const [activeTab, setActiveTab] = useState('orders');
   const [loading, setLoading] = useState(true);
+  const [directHireLoading, setDirectHireLoading] = useState(false);
   const [showStartModal, setShowStartModal] = useState(false);
   const [showCompleteModal, setShowCompleteModal] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
@@ -16,6 +20,7 @@ export default function WorkerOrders() {
 
   useEffect(() => {
     fetchWorkerOrders();
+    fetchDirectHireRequests();
   }, []);
 
   const fetchWorkerOrders = async () => {
@@ -28,6 +33,50 @@ export default function WorkerOrders() {
       console.error("Error fetching orders:", error);
       toast.error("Failed to load orders");
       setLoading(false);
+    }
+  };
+
+  const fetchDirectHireRequests = async () => {
+    try {
+      setDirectHireLoading(true);
+      const response = await axiosInstance.get('/api/direct-hire/requests?status=PENDING');
+      console.log("Direct Hire Requests:", response.data);
+      setDirectHireRequests(response.data.data?.requests || response.data.requests || []);
+      setDirectHireLoading(false);
+    } catch (error) {
+      console.error("Error fetching direct hire requests:", error);
+      setDirectHireLoading(false);
+    }
+  };
+
+  const handleAcceptDirectHire = async (applicationId) => {
+    try {
+      const response = await axiosInstance.patch(`/api/direct-hire/accept/${applicationId}`);
+      console.log("Direct hire accepted:", response.data);
+      toast.success("Direct hire request accepted successfully!");
+
+      // Refresh both lists
+      fetchDirectHireRequests();
+      fetchWorkerOrders();
+    } catch (error) {
+      console.error("Error accepting direct hire:", error);
+      toast.error(error.response?.data?.message || "Failed to accept direct hire request");
+    }
+  };
+
+  const handleRejectDirectHire = async (applicationId, reason) => {
+    try {
+      const response = await axiosInstance.patch(`/api/direct-hire/reject/${applicationId}`, {
+        reason
+      });
+      console.log("Direct hire rejected:", response.data);
+      toast.success("Direct hire request declined");
+
+      // Refresh direct hire requests
+      fetchDirectHireRequests();
+    } catch (error) {
+      console.error("Error rejecting direct hire:", error);
+      toast.error(error.response?.data?.message || "Failed to decline direct hire request");
     }
   };
 
@@ -156,20 +205,33 @@ export default function WorkerOrders() {
 
         <Container className="my-4">
           <div className="d-flex justify-content-between align-items-center mb-4">
-            <h2 className="fw-bold">My Orders</h2>
-            <Button variant="outline-info" onClick={fetchWorkerOrders} disabled={loading}>
+            <h2 className="fw-bold">My Orders & Requests</h2>
+            <Button
+              variant="outline-info"
+              onClick={() => {
+                fetchWorkerOrders();
+                fetchDirectHireRequests();
+              }}
+              disabled={loading || directHireLoading}
+            >
               Refresh
             </Button>
           </div>
 
-          {loading ? (
-            <div className="text-center py-5">
-              <div className="spinner-border text-info" role="status">
-                <span className="visually-hidden">Loading...</span>
-              </div>
-              <p className="mt-3 text-muted">Loading your orders...</p>
-            </div>
-          ) : orders.length === 0 ? (
+          <Tabs
+            activeKey={activeTab}
+            onSelect={(k) => setActiveTab(k)}
+            className="mb-4"
+          >
+            <Tab eventKey="orders" title="My Orders">
+              {loading ? (
+                <div className="text-center py-5">
+                  <div className="spinner-border text-info" role="status">
+                    <span className="visually-hidden">Loading...</span>
+                  </div>
+                  <p className="mt-3 text-muted">Loading your orders...</p>
+                </div>
+              ) : orders.length === 0 ? (
             <Card className="border-0 shadow-sm text-center py-5">
               <Card.Body>
                 <FaBriefcase size={60} className="text-muted mb-3" />
@@ -349,8 +411,54 @@ export default function WorkerOrders() {
                   </Card>
                 );
               })}
-            </div>
-          )}
+                </div>
+              )}
+            </Tab>
+
+            <Tab
+              eventKey="direct-hire"
+              title={
+                <span>
+                  Direct Job Requests
+                  {directHireRequests.length > 0 && (
+                    <Badge bg="danger" className="ms-2">
+                      {directHireRequests.length}
+                    </Badge>
+                  )}
+                </span>
+              }
+            >
+              {directHireLoading ? (
+                <div className="text-center py-5">
+                  <div className="spinner-border text-info" role="status">
+                    <span className="visually-hidden">Loading...</span>
+                  </div>
+                  <p className="mt-3 text-muted">Loading direct hire requests...</p>
+                </div>
+              ) : directHireRequests.length === 0 ? (
+                <Card className="border-0 shadow-sm text-center py-5">
+                  <Card.Body>
+                    <FaBriefcase size={60} className="text-muted mb-3" />
+                    <h4>No Direct Job Requests</h4>
+                    <p className="text-muted">
+                      You don't have any pending direct job requests from customers yet.
+                    </p>
+                  </Card.Body>
+                </Card>
+              ) : (
+                <div>
+                  {directHireRequests.map((request) => (
+                    <DirectHireRequestCard
+                      key={request.id}
+                      request={request}
+                      onAccept={handleAcceptDirectHire}
+                      onReject={handleRejectDirectHire}
+                    />
+                  ))}
+                </div>
+              )}
+            </Tab>
+          </Tabs>
         </Container>
       </div>
       <Footer />

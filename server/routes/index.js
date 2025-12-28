@@ -10,6 +10,9 @@ const reviewRoutes = require('./review.routes');
 const earningRoutes = require('./earning.routes');
 const analyticsRoutes = require('./analytics.routes');
 const notificationRoutes = require('./notification.routes');
+const workerRoutes = require('./worker.routes');
+const directHireRoutes = require('./directHire.routes');
+const adminRoutes = require('./admin.routes');
 
 // Mount routes
 router.use('/auth', authRoutes);
@@ -21,6 +24,9 @@ router.use('/reviews', reviewRoutes);
 router.use('/earnings', earningRoutes);
 router.use('/analytics', analyticsRoutes);
 router.use('/notifications', notificationRoutes);
+router.use('/workers', workerRoutes);
+router.use('/direct-hire', directHireRoutes);
+router.use('/admin', adminRoutes);
 
 // Health check
 router.get('/healthcheck', (req, res) => {

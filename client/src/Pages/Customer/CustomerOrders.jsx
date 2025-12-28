@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Card, Badge, Button, Row, Col, Modal, Form, Tabs, Tab } from 'react-bootstrap';
-import { FaUser, FaRegCalendarAlt, FaBriefcase, FaEnvelope, FaPhone, FaStar, FaCheckCircle, FaClipboardList, FaPlayCircle } from 'react-icons/fa';
+import { FaUser, FaRegCalendarAlt, FaBriefcase, FaEnvelope, FaPhone, FaStar, FaCheckCircle, FaClipboardList, FaPlayCircle, FaUserCheck } from 'react-icons/fa';
 import TopNavbar from '../../Components/TopNavbar';
 import Footer from '../../Components/Footer';
 import axiosInstance from '../../api/axios';
@@ -12,6 +12,7 @@ export default function CustomerOrders() {
   const [applications, setApplications] = useState([]);
   const [inProgressOrders, setInProgressOrders] = useState([]);
   const [completedOrders, setCompletedOrders] = useState([]);
+  const [hiredWorkers, setHiredWorkers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
@@ -24,6 +25,7 @@ export default function CustomerOrders() {
     fetchApplicationsForMyJobs();
     fetchInProgressOrders();
     fetchCompletedOrders();
+    fetchHiredWorkers();
   }, []);
 
   const fetchApplicationsForMyJobs = async () => {
@@ -57,6 +59,16 @@ export default function CustomerOrders() {
       setCompletedOrders(completed);
     } catch (error) {
       console.error("Error fetching completed orders:", error);
+    }
+  };
+
+  const fetchHiredWorkers = async () => {
+    try {
+      const response = await axiosInstance.get('/api/direct-hire/hired-workers');
+      console.log("Hired Workers:", response.data);
+      setHiredWorkers(response.data.data?.hiredWorkers || []);
+    } catch (error) {
+      console.error("Error fetching hired workers:", error);
     }
   };
 
@@ -157,25 +169,34 @@ export default function CustomerOrders() {
 
           {/* Summary Cards */}
           <Row className="mb-4">
-            <Col md={4}>
+            <Col md={3}>
               <Card className="border-0 shadow-sm h-100 bg-warning bg-opacity-10">
                 <Card.Body className="text-center">
                   <FaClipboardList size={40} className="text-warning mb-2" />
                   <h3 className="fw-bold mb-0">{applications.filter(app => app.applicationStatus === 'APPLIED' || app.applicationStatus === 'PENDING').length}</h3>
-                  <p className="text-muted small mb-0">Pending Customer Acceptance</p>
+                  <p className="text-muted small mb-0">Pending Applications</p>
                 </Card.Body>
               </Card>
             </Col>
-            <Col md={4}>
+            <Col md={3}>
+              <Card className="border-0 shadow-sm h-100 bg-primary bg-opacity-10">
+                <Card.Body className="text-center">
+                  <FaUserCheck size={40} className="text-primary mb-2" />
+                  <h3 className="fw-bold mb-0">{hiredWorkers.length}</h3>
+                  <p className="text-muted small mb-0">Hired Workers</p>
+                </Card.Body>
+              </Card>
+            </Col>
+            <Col md={3}>
               <Card className="border-0 shadow-sm h-100 bg-info bg-opacity-10">
                 <Card.Body className="text-center">
                   <FaPlayCircle size={40} className="text-info mb-2" />
                   <h3 className="fw-bold mb-0">{inProgressOrders.length}</h3>
-                  <p className="text-muted small mb-0">Accepted / In Progress</p>
+                  <p className="text-muted small mb-0">In Progress</p>
                 </Card.Body>
               </Card>
             </Col>
-            <Col md={4}>
+            <Col md={3}>
               <Card className="border-0 shadow-sm h-100 bg-success bg-opacity-10">
                 <Card.Body className="text-center">
                   <FaCheckCircle size={40} className="text-success mb-2" />
@@ -468,6 +489,163 @@ export default function CustomerOrders() {
                     </Card.Body>
                   </Card>
                 );
+                  })}
+                </div>
+              )}
+            </Tab>
+
+            {/* Hired Workers Tab */}
+            <Tab
+              eventKey="hired"
+              title={
+                <span>
+                  <FaUserCheck className="me-2" />
+                  Hired Workers
+                  {hiredWorkers.length > 0 && (
+                    <Badge bg="primary" className="ms-2">{hiredWorkers.length}</Badge>
+                  )}
+                </span>
+              }
+            >
+              {hiredWorkers.length === 0 ? (
+                <Card className="border-0 shadow-sm text-center py-5">
+                  <Card.Body>
+                    <FaUserCheck size={60} className="text-muted mb-3" />
+                    <h4>No Hired Workers Yet</h4>
+                    <p className="text-muted">
+                      You haven't sent any direct job requests to workers yet.
+                    </p>
+                    <Button variant="info" className="text-white mt-3" href="/customerhire">
+                      Browse Workers
+                    </Button>
+                  </Card.Body>
+                </Card>
+              ) : (
+                <div>
+                  {hiredWorkers.map((hire) => {
+                    const job = hire.job || {};
+                    const worker = hire.user || {};
+                    const orders = hire.orders || [];
+                    const latestOrder = orders.length > 0 ? orders[0] : null;
+                    return (
+                      <Card key={hire.id} className="mb-4 border-0 shadow-sm">
+                        <Card.Body className="p-4">
+                          <Row>
+                            <Col md={8}>
+                              <div className="d-flex align-items-center gap-2 mb-3">
+                                <h5 className="mb-0 fw-bold text-primary">
+                                  <FaBriefcase className="me-2" />
+                                  {job.title || 'N/A'}
+                                </h5>
+                                <Badge bg="success" className="rounded-pill">
+                                  Hired
+                                </Badge>
+                                {latestOrder && (
+                                  <Badge bg={
+                                    latestOrder.status === 'COMPLETED' ? 'success' :
+                                    latestOrder.status === 'ACCEPTED' ? 'info' : 'warning'
+                                  } className="rounded-pill">
+                                    {latestOrder.status === 'ACCEPTED' ? 'In Progress' : latestOrder.status}
+                                  </Badge>
+                                )}
+                              </div>
+
+                              {/* Worker Information */}
+                              <div className="mb-3 p-3 bg-light rounded">
+                                <h6 className="fw-bold mb-2">
+                                  <FaUser className="me-2" />
+                                  Worker Information
+                                </h6>
+                                <div className="row">
+                                  <div className="col-md-6">
+                                    <div className="small text-muted">Name</div>
+                                    <div className="fw-semibold">
+                                      {worker.fname} {worker.lname}
+                                    </div>
+                                  </div>
+                                  <div className="col-md-6">
+                                    <div className="small text-muted">
+                                      <FaEnvelope className="me-1" />
+                                      Email
+                                    </div>
+                                    <div className="fw-semibold">{worker.email}</div>
+                                  </div>
+                                  <div className="col-md-6 mt-2">
+                                    <div className="small text-muted">
+                                      <FaPhone className="me-1" />
+                                      Phone
+                                    </div>
+                                    <div className="fw-semibold">{worker.phonenumber || 'N/A'}</div>
+                                  </div>
+                                  <div className="col-md-6 mt-2">
+                                    <div className="small text-muted">Location</div>
+                                    <div className="fw-semibold">{worker.address || 'N/A'}</div>
+                                  </div>
+                                </div>
+
+                                {/* Skills */}
+                                {worker.skills && (
+                                  <div className="mt-3">
+                                    <div className="small text-muted mb-2">Skills</div>
+                                    <div className="d-flex flex-wrap gap-1">
+                                      {worker.skills.split(',').map((skill, idx) => (
+                                        <Badge key={idx} bg="secondary" className="px-2 py-1">
+                                          {skill.trim()}
+                                        </Badge>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Job Details */}
+                              <div className="d-flex flex-wrap gap-3 text-secondary small">
+                                <span>
+                                  <strong>Hired:</strong> {getDaysAgo(hire.appliedDate)}
+                                </span>
+                                <span>
+                                  <strong>Category:</strong> {job.category?.category || 'N/A'}
+                                </span>
+                                <span>
+                                  <strong>Hourly Rate:</strong> LKR {job.hourlyRate || 0}
+                                </span>
+                                <span>
+                                  <strong>Location:</strong> {job.location || 'N/A'}
+                                </span>
+                              </div>
+                            </Col>
+
+                            <Col md={4} className="d-flex flex-column justify-content-center align-items-end gap-2">
+                              <div className="text-center p-3 bg-primary bg-opacity-10 rounded w-100">
+                                <div className="small text-muted mb-2">Direct Hire Status</div>
+                                <h6 className="mb-1 text-primary">Worker Accepted</h6>
+                                {latestOrder ? (
+                                  <>
+                                    <div className="small text-muted mt-2">
+                                      Current Order: {latestOrder.status === 'ACCEPTED' ? 'In Progress' : latestOrder.status}
+                                    </div>
+                                    {latestOrder.completedDate && (
+                                      <div className="small text-muted">
+                                        Completed: {new Date(latestOrder.completedDate).toLocaleDateString()}
+                                      </div>
+                                    )}
+                                  </>
+                                ) : (
+                                  <p className="small text-muted mb-0 mt-2">
+                                    No active orders yet
+                                  </p>
+                                )}
+                              </div>
+                              {orders.length > 0 && (
+                                <div className="small text-muted text-center w-100">
+                                  Total Orders: {orders.length}
+                                </div>
+                              )}
+                            </Col>
+                          </Row>
+                        </Card.Body>
+                      </Card>
+                    );
                   })}
                 </div>
               )}

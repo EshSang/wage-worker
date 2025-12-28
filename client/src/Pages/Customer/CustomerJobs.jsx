@@ -22,19 +22,36 @@ import {
 import axiosInstance from "../../api/axios";
 import TopNavbar from "../../Components/TopNavbar";
 import Footer from "../../Components/Footer";
+import WorkerCard from "../../Components/WorkerCard";
+import WorkerDetailsModal from "../../Components/WorkerDetailsModal";
+import DirectHireModal from "../../Components/DirectHireModal";
+import { toast } from "react-toastify";
 import "./CustomerJobs.css";
 
 const CustomerJobs = () => {
   const [jobs, setJobs] = useState([]);
+  const [workers, setWorkers] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [requirements, setRequirements] = useState("");
   const [activeTab, setActiveTab] = useState("recent");
   const [loading, setLoading] = useState(true);
   const [selectedJob, setSelectedJob] = useState(null);
+  const [selectedWorker, setSelectedWorker] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [showWorkerModal, setShowWorkerModal] = useState(false);
+  const [showHireModal, setShowHireModal] = useState(false);
 
-  /* ---------------- FETCH JOBS ---------------- */
+  /* ---------------- FETCH DATA ---------------- */
   useEffect(() => {
+    if (activeTab === "recent") {
+      fetchWorkers();
+    } else {
+      fetchJobs();
+    }
+  }, [activeTab]);
+
+  const fetchJobs = () => {
+    setLoading(true);
     axiosInstance
       .get("/api/jobs")
       .then((res) => {
@@ -45,7 +62,23 @@ const CustomerJobs = () => {
         console.error("Error fetching jobs:", err);
         setLoading(false);
       });
-  }, []);
+  };
+
+  const fetchWorkers = () => {
+    setLoading(true);
+    axiosInstance
+      .get("/api/workers")
+      .then((res) => {
+        console.log("Workers response:", res.data);
+        setWorkers(res.data.data?.workers || res.data.workers || []);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error("Error fetching workers:", err);
+        toast.error("Failed to load workers");
+        setLoading(false);
+      });
+  };
 
   /* ---------------- SEARCH FILTER ---------------- */
   const filteredJobs = jobs.filter((job) => {
@@ -54,6 +87,20 @@ const CustomerJobs = () => {
       job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       job.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
       categoryName.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  });
+
+  /* ---------------- WORKER SEARCH FILTER ---------------- */
+  const filteredWorkers = workers.filter((worker) => {
+    const fullName = `${worker.fname} ${worker.lname}`.toLowerCase();
+    const skills = (worker.skills || "").toLowerCase();
+    const location = (worker.location || worker.address || "").toLowerCase();
+    const searchLower = searchTerm.toLowerCase();
+
+    return (
+      fullName.includes(searchLower) ||
+      skills.includes(searchLower) ||
+      location.includes(searchLower)
     );
   });
 
@@ -100,6 +147,24 @@ const CustomerJobs = () => {
     return `${days} days ago`;
   };
 
+  /* ---------------- WORKER MODAL HANDLERS ---------------- */
+  const openWorkerModal = (worker) => {
+    setSelectedWorker(worker);
+    setShowWorkerModal(true);
+  };
+
+  const openHireModal = () => {
+    setShowWorkerModal(false);
+    setShowHireModal(true);
+  };
+
+  const handleDirectHire = (response) => {
+    console.log("Direct hire submitted:", response);
+    toast.success("Job request sent successfully!");
+    setShowHireModal(false);
+    setSelectedWorker(null);
+  };
+
   return (
     <div className="min-vh-100 d-flex flex-column bg-light min-vw-100">
       <TopNavbar />
@@ -129,14 +194,14 @@ const CustomerJobs = () => {
             className="rounded-pill px-4"
             onClick={() => setActiveTab("recent")}
           >
-            Most Recent
+            Browse Workers
           </Button>
           <Button
             variant={activeTab === "best" ? "info" : "outline-info"}
             className="rounded-pill px-4"
             onClick={() => setActiveTab("best")}
           >
-            Best Matches
+            Browse Jobs
           </Button>
         </div>
 
@@ -167,58 +232,85 @@ const CustomerJobs = () => {
         {loading ? (
           <div className="text-center py-5">
             <div className="spinner-border text-info" />
+            <p className="mt-3 text-muted">
+              {activeTab === "recent" ? "Loading workers..." : "Loading jobs..."}
+            </p>
           </div>
         ) : (
           <div>
-            {(activeTab === "recent" ? sortedJobs : bestMatchedJobs).map(
-              (job, index) => (
-                <Card
-                  key={job.id}
-                  className="mb-4 border-0 shadow-sm hover-lift"
-                >
-                  <Card.Body className="p-4">
-                    <div className="d-flex justify-content-between">
-                      <div>
-                        <h5 className="fw-bold text-info">
-                          {job.title}
-                          {activeTab === "best" && (
+            {activeTab === "recent" ? (
+              /* ---------------- WORKERS LIST ---------------- */
+              filteredWorkers.length > 0 ? (
+                filteredWorkers.map((worker) => (
+                  <WorkerCard
+                    key={worker.id}
+                    worker={worker}
+                    onViewDetails={() => openWorkerModal(worker)}
+                  />
+                ))
+              ) : (
+                <div className="text-center py-5">
+                  <p className="text-muted">No workers found</p>
+                </div>
+              )
+            ) : (
+              /* ---------------- JOBS LIST ---------------- */
+              bestMatchedJobs.length > 0 ? (
+                bestMatchedJobs.map((job) => (
+                  <Card
+                    key={job.id}
+                    className="mb-4 border-0 shadow-sm hover-lift"
+                  >
+                    <Card.Body className="p-4">
+                      <div className="d-flex justify-content-between">
+                        <div>
+                          <h5 className="fw-bold text-info">
+                            {job.title}
                             <Badge bg="info" className="ms-2">
                               Match {job.matchScore}
                             </Badge>
-                          )}
-                        </h5>
-                        <p className="text-muted">{job.description}</p>
+                          </h5>
+                          <p className="text-muted">{job.description}</p>
+                        </div>
+                        <Badge style={{height:"25px" , width:"80px", textAlign:"center"}} bg="success">Open</Badge>
                       </div>
-                      <Badge style={{height:"25px" , width:"80px", textAlign:"center"}} bg="success">Open</Badge>
-                    </div>
 
-                    <Badge bg="light" text="dark" className="mb-2">
-                      <FaBriefcase className="me-1" />
-                      {job.category?.category}
-                    </Badge>
+                      <Badge bg="light" text="dark" className="mb-2">
+                        <FaBriefcase className="me-1" />
+                        {job.category?.category}
+                      </Badge>
 
-                    <div className="d-flex justify-content-between mt-3">
-                      <small className="text-muted">
-                        <FaMapMarkerAlt className="me-1" />
-                        {job.location}
-                      </small>
-                      <small className="text-muted">
-                        <FaRegCalendarAlt className="me-1" />
-                        {getDaysAgo(job.postedDate)}
-                      </small>
-                      <Button
-                        size="sm"
-                        variant="info"
-                        onClick={() => {
-                          setSelectedJob(job);
-                          setShowModal(true);
-                        }}
-                      >
-                        View Details →
-                      </Button>
-                    </div>
-                  </Card.Body>
-                </Card>
+                      <div className="d-flex justify-content-between mt-3">
+                        <small className="text-muted">
+                          <FaMapMarkerAlt className="me-1" />
+                          {job.location}
+                        </small>
+                        <small className="text-muted">
+                          <FaRegCalendarAlt className="me-1" />
+                          {getDaysAgo(job.postedDate)}
+                        </small>
+                        <Button
+                          size="sm"
+                          variant="info"
+                          onClick={() => {
+                            setSelectedJob(job);
+                            setShowModal(true);
+                          }}
+                        >
+                          View Details →
+                        </Button>
+                      </div>
+                    </Card.Body>
+                  </Card>
+                ))
+              ) : (
+                <div className="text-center py-5">
+                  <p className="text-muted">
+                    {requirements
+                      ? "No matching jobs found. Try different requirements."
+                      : "Enter requirements above to find matching jobs."}
+                  </p>
+                </div>
               )
             )}
           </div>
@@ -227,7 +319,7 @@ const CustomerJobs = () => {
 
       <Footer />
 
-      {/* ---------------- MODAL ---------------- */}
+      {/* ---------------- JOB DETAILS MODAL ---------------- */}
       <Modal
         show={showModal}
         onHide={() => setShowModal(false)}
@@ -250,6 +342,27 @@ const CustomerJobs = () => {
           </p>
         </Modal.Body>
       </Modal>
+
+      {/* ---------------- WORKER DETAILS MODAL ---------------- */}
+      <WorkerDetailsModal
+        show={showWorkerModal}
+        worker={selectedWorker}
+        onHire={openHireModal}
+        onClose={() => {
+          setShowWorkerModal(false);
+          setSelectedWorker(null);
+        }}
+      />
+
+      {/* ---------------- DIRECT HIRE MODAL ---------------- */}
+      <DirectHireModal
+        show={showHireModal}
+        worker={selectedWorker}
+        onSubmit={handleDirectHire}
+        onClose={() => {
+          setShowHireModal(false);
+        }}
+      />
     </div>
   );
 };

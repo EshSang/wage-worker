@@ -93,13 +93,15 @@ class ApplicationService {
 
   /**
    * Get all applications for jobs posted by a user (customer view)
+   * Excludes DIRECT_HIRE applications since those appear in "Hired Workers" tab
    */
   async getApplicationsForUserJobs(userId) {
     return await prisma.jobApplication.findMany({
       where: {
         job: {
           createdUserId: userId
-        }
+        },
+        applicationType: 'MANUAL' // Only show worker-initiated applications, exclude DIRECT_HIRE
       },
       include: {
         job: {

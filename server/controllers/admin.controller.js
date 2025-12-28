@@ -1,0 +1,204 @@
+const adminService = require('../services/admin.service');
+
+/**
+ * Get all users with filters
+ * GET /api/admin/users?usertype=USER&search=john&page=1&limit=20
+ */
+async function getAllUsers(req, res) {
+  try {
+    const { usertype, search, page, limit } = req.query;
+
+    const filters = {};
+    if (usertype) filters.usertype = usertype;
+    if (search) filters.search = search;
+    if (page) filters.page = parseInt(page);
+    if (limit) filters.limit = parseInt(limit);
+
+    const result = await adminService.getAllUsers(filters);
+
+    res.status(200).json({
+      success: true,
+      message: 'Users retrieved successfully',
+      data: result,
+    });
+  } catch (error) {
+    console.error('Get all users error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Failed to retrieve users',
+    });
+  }
+}
+
+/**
+ * Get user statistics
+ * GET /api/admin/users/statistics
+ */
+async function getUserStatistics(req, res) {
+  try {
+    const stats = await adminService.getUserStatistics();
+
+    res.status(200).json({
+      success: true,
+      message: 'User statistics retrieved successfully',
+      data: stats,
+    });
+  } catch (error) {
+    console.error('Get user statistics error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Failed to retrieve statistics',
+    });
+  }
+}
+
+/**
+ * Get single user by ID
+ * GET /api/admin/users/:userId
+ */
+async function getUserById(req, res) {
+  try {
+    const { userId } = req.params;
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: 'User ID is required',
+      });
+    }
+
+    const user = await adminService.getUserById(userId);
+
+    res.status(200).json({
+      success: true,
+      message: 'User details retrieved successfully',
+      data: user,
+    });
+  } catch (error) {
+    console.error('Get user by ID error:', error);
+    const statusCode = error.message === 'User not found' ? 404 : 500;
+    res.status(statusCode).json({
+      success: false,
+      message: error.message || 'Failed to retrieve user details',
+    });
+  }
+}
+
+/**
+ * Create new user
+ * POST /api/admin/users
+ */
+async function createUser(req, res) {
+  try {
+    const userData = req.body;
+
+    // Validation
+    if (!userData.email || !userData.password || !userData.fname || !userData.lname) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email, password, first name, and last name are required',
+      });
+    }
+
+    const user = await adminService.createUser(userData);
+
+    res.status(201).json({
+      success: true,
+      message: 'User created successfully',
+      data: user,
+    });
+  } catch (error) {
+    console.error('Create user error:', error);
+    const statusCode = error.message === 'Email already exists' ? 409 : 400;
+    res.status(statusCode).json({
+      success: false,
+      message: error.message || 'Failed to create user',
+    });
+  }
+}
+
+/**
+ * Update user
+ * PUT /api/admin/users/:userId
+ */
+async function updateUser(req, res) {
+  try {
+    const { userId } = req.params;
+    const userData = req.body;
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: 'User ID is required',
+      });
+    }
+
+    const user = await adminService.updateUser(userId, userData);
+
+    res.status(200).json({
+      success: true,
+      message: 'User updated successfully',
+      data: user,
+    });
+  } catch (error) {
+    console.error('Update user error:', error);
+    let statusCode = 400;
+    if (error.message === 'User not found') statusCode = 404;
+    if (error.message === 'Email already taken') statusCode = 409;
+
+    res.status(statusCode).json({
+      success: false,
+      message: error.message || 'Failed to update user',
+    });
+  }
+}
+
+/**
+ * Delete user
+ * DELETE /api/admin/users/:userId
+ */
+async function deleteUser(req, res) {
+  try {
+    const { userId } = req.params;
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: 'User ID is required',
+      });
+    }
+
+    // Prevent admin from deleting themselves
+    if (parseInt(userId) === req.user.id) {
+      return res.status(400).json({
+        success: false,
+        message: 'You cannot delete your own account',
+      });
+    }
+
+    await adminService.deleteUser(userId);
+
+    res.status(200).json({
+      success: true,
+      message: 'User deleted successfully',
+    });
+  } catch (error) {
+    console.error('Delete user error:', error);
+    let statusCode = 400;
+    if (error.message === 'User not found') statusCode = 404;
+
+    res.status(statusCode).json({
+      success: false,
+      message: error.message || 'Failed to delete user',
+    });
+  }
+}
+
+module.exports = {
+  getAllUsers,
+  getUserStatistics,
+  getUserById,
+  createUser,
+  updateUser,
+  deleteUser,
+};
