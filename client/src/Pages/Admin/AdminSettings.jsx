@@ -59,9 +59,20 @@ export default function AdminSettings() {
   const [formErrors, setFormErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
 
+  // Category Management State
+  const [categories, setCategories] = useState([]);
+  const [categoryLoading, setCategoryLoading] = useState(false);
+  const [categoryInput, setCategoryInput] = useState("");
+  const [editingCategory, setEditingCategory] = useState(null);
+  const [showDeleteCategoryModal, setShowDeleteCategoryModal] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [deletingCategory, setDeletingCategory] = useState(false);
+
   useEffect(() => {
     if (activeKey === "users") {
       fetchUsers();
+    } else if (activeKey === "services") {
+      fetchCategories();
     }
   }, [activeKey, searchTerm, filterType, pagination.currentPage]);
 
@@ -262,6 +273,99 @@ export default function AdminSettings() {
     return labels[usertype] || usertype;
   };
 
+  // ============= CATEGORY MANAGEMENT FUNCTIONS =============
+
+  const fetchCategories = async () => {
+    try {
+      setCategoryLoading(true);
+      const response = await axiosInstance.get("/api/categories");
+      setCategories(response.data.categories || []);
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+      if (error.response?.status === 403) {
+        toast.error("Access denied. Admin privileges required.");
+      } else {
+        toast.error("Failed to load categories");
+      }
+    } finally {
+      setCategoryLoading(false);
+    }
+  };
+
+  const handleAddCategory = async (e) => {
+    e.preventDefault();
+
+    if (!categoryInput.trim()) {
+      toast.error("Category name is required");
+      return;
+    }
+
+    try {
+      if (editingCategory) {
+        // Update existing category
+        await axiosInstance.put(`/api/categories/${editingCategory.id}`, {
+          category: categoryInput.trim(),
+        });
+        toast.success("Category updated successfully");
+        setEditingCategory(null);
+      } else {
+        // Create new category
+        await axiosInstance.post("/api/categories", {
+          category: categoryInput.trim(),
+        });
+        toast.success("Category added successfully");
+      }
+
+      setCategoryInput("");
+      fetchCategories();
+    } catch (error) {
+      console.error("Error saving category:", error);
+      const errorMessage = error.response?.data?.message || "Failed to save category";
+      toast.error(errorMessage);
+    }
+  };
+
+  const handleEditCategory = (category) => {
+    setEditingCategory(category);
+    setCategoryInput(category.category);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingCategory(null);
+    setCategoryInput("");
+  };
+
+  const handleDeleteCategory = (category) => {
+    setSelectedCategory(category);
+    setShowDeleteCategoryModal(true);
+  };
+
+  const confirmDeleteCategory = async () => {
+    try {
+      setDeletingCategory(true);
+      await axiosInstance.delete(`/api/categories/${selectedCategory.id}`);
+      toast.success("Category deleted successfully");
+      setShowDeleteCategoryModal(false);
+      setSelectedCategory(null);
+      fetchCategories();
+    } catch (error) {
+      console.error("Error deleting category:", error);
+      toast.error(error.response?.data?.message || "Failed to delete category");
+    } finally {
+      setDeletingCategory(false);
+    }
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  };
+
   return (
     <div>
       <TopNavbar />
@@ -434,70 +538,77 @@ export default function AdminSettings() {
                   <Card.Body>
                     <h5 className="fw-bold mb-3">Service Categories</h5>
 
-                    <Form className="d-flex gap-2 mb-4">
+                    <Form onSubmit={handleAddCategory} className="d-flex gap-2 mb-4">
                       <Form.Control
                         type="text"
                         placeholder="Enter service category (e.g., Plumbing)"
+                        value={categoryInput}
+                        onChange={(e) => setCategoryInput(e.target.value)}
                       />
-                      <Button variant="primary">Add</Button>
+                      {editingCategory && (
+                        <Button variant="secondary" onClick={handleCancelEdit}>
+                          Cancel
+                        </Button>
+                      )}
+                      <Button variant="primary" type="submit">
+                        {editingCategory ? "Update" : "Add"}
+                      </Button>
                     </Form>
 
-                    <div className="table-responsive">
-                      <Table hover className="align-middle">
-                        <thead className="table-light">
-                          <tr>
-                            <th>#</th>
-                            <th>Category Name</th>
-                            <th>Created Date</th>
-                            <th className="text-end">Actions</th>
-                          </tr>
-                        </thead>
+                    {categoryLoading ? (
+                      <div className="text-center py-5">
+                        <Spinner animation="border" variant="primary" />
+                        <p className="text-muted mt-2">Loading categories...</p>
+                      </div>
+                    ) : (
+                      <div className="table-responsive">
+                        <Table hover className="align-middle">
+                          <thead className="table-light">
+                            <tr>
+                              <th>#</th>
+                              <th>Category Name</th>
+                              <th>Created Date</th>
+                              <th className="text-end">Actions</th>
+                            </tr>
+                          </thead>
 
-                        <tbody>
-                          <tr>
-                            <td>1</td>
-                            <td>Plumbing</td>
-                            <td>2025-01-10</td>
-                            <td className="text-end">
-                              <Button variant="outline-primary" size="sm" className="me-2">
-                                Edit
-                              </Button>
-                              <Button variant="outline-danger" size="sm">
-                                Delete
-                              </Button>
-                            </td>
-                          </tr>
-
-                          <tr>
-                            <td>2</td>
-                            <td>Welder</td>
-                            <td>2025-01-12</td>
-                            <td className="text-end">
-                              <Button variant="outline-primary" size="sm" className="me-2">
-                                Edit
-                              </Button>
-                              <Button variant="outline-danger" size="sm">
-                                Delete
-                              </Button>
-                            </td>
-                          </tr>
-
-                          <tr>
-                            <td>3</td>
-                            <td>Painter</td>
-                            <td>2025-01-15</td>
-                            <td className="text-end">
-                              <Button variant="outline-primary" size="sm" className="me-2">
-                                Edit
-                              </Button>
-                              <Button variant="outline-danger" size="sm">
-                                Delete
-                              </Button>
-                            </td>
-                          </tr>
-                        </tbody>
-                      </Table>
-                    </div>
+                          <tbody>
+                            {categories.length > 0 ? (
+                              categories.map((category, index) => (
+                                <tr key={category.id}>
+                                  <td>{index + 1}</td>
+                                  <td className="fw-semibold">{category.category}</td>
+                                  <td className="text-muted">{formatDate(category.createdAt)}</td>
+                                  <td className="text-end">
+                                    <Button
+                                      variant="outline-primary"
+                                      size="sm"
+                                      className="me-2"
+                                      onClick={() => handleEditCategory(category)}
+                                    >
+                                      <Edit size={14} />
+                                    </Button>
+                                    <Button
+                                      variant="outline-danger"
+                                      size="sm"
+                                      onClick={() => handleDeleteCategory(category)}
+                                    >
+                                      <Trash2 size={14} />
+                                    </Button>
+                                  </td>
+                                </tr>
+                              ))
+                            ) : (
+                              <tr>
+                                <td colSpan="4" className="text-center text-muted py-4">
+                                  No categories found. Add one to get started.
+                                </td>
+                              </tr>
+                            )}
+                          </tbody>
+                        </Table>
+                      </div>
+                    )}
                   </Card.Body>
                 </Card>
               </Tab>
@@ -749,6 +860,28 @@ export default function AdminSettings() {
           </Button>
           <Button variant="danger" onClick={confirmDelete} disabled={deleting}>
             {deleting ? "Deleting..." : "Delete"}
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Delete Category Confirmation Modal */}
+      <Modal show={showDeleteCategoryModal} onHide={() => setShowDeleteCategoryModal(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Confirm Delete</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {selectedCategory && (
+            <p>
+              Are you sure you want to delete the category <strong>{selectedCategory.category}</strong>? This action cannot be undone.
+            </p>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowDeleteCategoryModal(false)}>
+            Cancel
+          </Button>
+          <Button variant="danger" onClick={confirmDeleteCategory} disabled={deletingCategory}>
+            {deletingCategory ? "Deleting..." : "Delete"}
           </Button>
         </Modal.Footer>
       </Modal>

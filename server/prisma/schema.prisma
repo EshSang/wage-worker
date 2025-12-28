@@ -75,9 +75,10 @@ model JobApplication {
 }
 
 model JobCategory {
-  id       Int    @id @default(autoincrement())
-  category String @db.VarChar(50)
-  jobs     Job[]
+  id        Int      @id @default(autoincrement())
+  category  String   @db.VarChar(50)
+  createdAt DateTime @default(now()) @map("created_at")
+  jobs      Job[]
 
   @@map("jobcategory")
 }
