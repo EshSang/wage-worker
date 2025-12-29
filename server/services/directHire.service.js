@@ -5,9 +5,23 @@ const prisma = new PrismaClient();
  * Create a direct hire job request
  * This creates a job and automatically creates a job application
  * for the target worker with status PENDING
+ * Payment is verified before creating the request
  */
-async function createDirectHireRequest(customerId, workerId, jobData) {
+async function createDirectHireRequest(customerId, workerId, jobData, paymentIntentId) {
   try {
+    // Validate payment intent is provided
+    if (!paymentIntentId) {
+      throw new Error('Payment Intent ID is required');
+    }
+
+    // Verify payment before creating request
+    const paymentService = require('./payment.service');
+    const paymentVerification = await paymentService.verifyPayment(paymentIntentId);
+
+    if (!paymentVerification.verified) {
+      throw new Error('Payment verification failed');
+    }
+
     // Validate worker exists and is a USER type
     const worker = await prisma.user.findUnique({
       where: { id: workerId }
@@ -45,7 +59,7 @@ async function createDirectHireRequest(customerId, workerId, jobData) {
       }
     });
 
-    // Auto-create job application with status PENDING
+    // Auto-create job application with status PENDING and store payment info
     const application = await prisma.jobApplication.create({
       data: {
         jobId: job.id,
@@ -53,6 +67,7 @@ async function createDirectHireRequest(customerId, workerId, jobData) {
         appliedDate: new Date(),
         applicationStatus: 'PENDING', // Worker must accept
         applicationType: 'DIRECT_HIRE',
+        paymentIntentId: paymentIntentId, // Store payment intent for later use
       },
       include: {
         job: {
@@ -79,7 +94,9 @@ async function createDirectHireRequest(customerId, workerId, jobData) {
       }
     });
 
-    return { job, application };
+    console.log(`Direct hire request created with payment intent: ${paymentIntentId}`);
+
+    return { job, application, paymentVerification };
   } catch (error) {
     console.error('Error in createDirectHireRequest:', error);
     throw error;
@@ -159,6 +176,13 @@ async function acceptDirectHireRequest(workerId, applicationId) {
         userId: workerId, // The worker ID
         acceptedDate: new Date(),
         status: 'ACCEPTED', // Set to ACCEPTED so worker can start work
+        // Include payment details if payment was made (for direct hire requests)
+        ...(application.paymentIntentId && {
+          paymentIntentId: application.paymentIntentId,
+          paymentStatus: 'COMPLETED',
+          paidAmount: application.job.hourlyRate,
+          paymentDate: new Date(),
+        }),
       },
       include: {
         job: {
@@ -289,14 +313,16 @@ async function getWorkerDirectHireRequests(workerId, status = 'PENDING') {
 }
 
 /**
- * Get customer's hired workers (accepted direct hire applications)
+ * Get customer's direct hire requests (both pending and accepted)
  */
 async function getCustomerHiredWorkers(customerId) {
   try {
     const hiredWorkers = await prisma.jobApplication.findMany({
       where: {
         applicationType: 'DIRECT_HIRE',
-        applicationStatus: 'ACCEPTED',
+        applicationStatus: {
+          in: ['PENDING', 'ACCEPTED']
+        },
         job: {
           createdUserId: customerId
         }

@@ -2,27 +2,47 @@ const orderService = require('../services/order.service');
 
 class OrderController {
   /**
-   * Create order from accepted application
+   * Create order from accepted application with payment verification
    * POST /api/orders
    */
   async createOrder(req, res) {
     try {
-      const { applicationId } = req.body;
+      const { applicationId, paymentIntentId } = req.body;
       const userId = req.user.id;
 
+      console.log(`[${new Date().toISOString()}] Create order request - Application: ${applicationId}, User: ${req.user.email}`);
+
       if (!applicationId) {
-        return res.status(400).json({ message: 'Application ID is required' });
+        return res.status(400).json({
+          success: false,
+          message: 'Application ID is required',
+        });
       }
 
-      const order = await orderService.createOrderFromApplication(applicationId, userId);
+      if (!paymentIntentId) {
+        return res.status(400).json({
+          success: false,
+          message: 'Payment Intent ID is required',
+        });
+      }
+
+      const order = await orderService.createOrderFromApplication(
+        parseInt(applicationId),
+        userId,
+        paymentIntentId
+      );
+
+      console.log(`[${new Date().toISOString()}] Order created successfully - ID: ${order.id}`);
 
       res.status(201).json({
+        success: true,
         message: 'Order created successfully',
-        order,
+        data: order,
       });
     } catch (error) {
-      console.error('Create order error:', error);
-      res.status(500).json({
+      console.error(`[${new Date().toISOString()}] Create order error:`, error);
+      res.status(400).json({
+        success: false,
         message: error.message || 'Failed to create order',
       });
     }

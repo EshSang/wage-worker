@@ -3,6 +3,7 @@ import { Modal, Button, Form, Row, Col, Alert, Spinner } from 'react-bootstrap';
 import { FaInfoCircle, FaPaperPlane } from 'react-icons/fa';
 import axiosInstance from '../api/axios';
 import { toast } from 'react-toastify';
+import DirectHirePaymentModal from './DirectHirePaymentModal';
 
 const DirectHireModal = ({ show, worker, onSubmit, onClose }) => {
   const [formData, setFormData] = useState({
@@ -15,6 +16,8 @@ const DirectHireModal = ({ show, worker, onSubmit, onClose }) => {
   });
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [pendingJobData, setPendingJobData] = useState(null);
 
   useEffect(() => {
     if (show) {
@@ -60,17 +63,40 @@ const DirectHireModal = ({ show, worker, onSubmit, onClose }) => {
       return;
     }
 
+    // Store job data and proceed to payment
+    const jobData = {
+      workerId: worker.id,
+      ...formData,
+      categoryId: parseInt(formData.categoryId),
+      hourlyRate: parseInt(formData.hourlyRate),
+    };
+
+    setPendingJobData(jobData);
+    setShowPaymentModal(true);
+  };
+
+  const handlePaymentSuccess = async (paymentIntentId) => {
+    console.log('handlePaymentSuccess called with payment intent ID:', paymentIntentId);
+
     try {
       setLoading(true);
+      console.log('Sending direct hire request with data:', {
+        ...pendingJobData,
+        paymentIntentId: paymentIntentId,
+      });
+
       const response = await axiosInstance.post('/api/direct-hire/request', {
-        workerId: worker.id,
-        ...formData,
-        categoryId: parseInt(formData.categoryId),
-        hourlyRate: parseInt(formData.hourlyRate),
+        ...pendingJobData,
+        paymentIntentId: paymentIntentId,
       });
 
       console.log('Direct hire response:', response.data);
-      toast.success('Job request sent to worker successfully!');
+
+      // Close payment modal first
+      setShowPaymentModal(false);
+
+      // Show success message
+      toast.success('Payment successful! Job request sent to worker.');
 
       // Reset form
       setFormData({
@@ -82,9 +108,13 @@ const DirectHireModal = ({ show, worker, onSubmit, onClose }) => {
         skills: worker?.skills || '',
       });
 
+      setPendingJobData(null);
       setLoading(false);
+
+      // Close main modal
       onClose();
 
+      // Call parent callback
       if (onSubmit) {
         onSubmit(response.data);
       }
@@ -92,22 +122,29 @@ const DirectHireModal = ({ show, worker, onSubmit, onClose }) => {
       console.error('Error sending job request:', error);
       toast.error(error.response?.data?.message || 'Failed to send job request');
       setLoading(false);
+      setShowPaymentModal(false);
     }
   };
 
+  const handlePaymentCancel = () => {
+    setShowPaymentModal(false);
+    setPendingJobData(null);
+  };
+
   return (
-    <Modal show={show} onHide={onClose} size="lg" centered>
-      <Modal.Header closeButton>
-        <Modal.Title>
-          Create Job Request for {worker?.fname} {worker?.lname}
-        </Modal.Title>
-      </Modal.Header>
-      <Form onSubmit={handleSubmit}>
-        <Modal.Body style={{ maxHeight: '70vh', overflowY: 'auto' }}>
-          <Alert variant="info">
-            <FaInfoCircle className="me-2" />
-            You are sending a direct job request to this worker. They must accept before starting work.
-          </Alert>
+    <>
+      <Modal show={show} onHide={onClose} size="lg" centered>
+        <Modal.Header closeButton>
+          <Modal.Title>
+            Create Job Request for {worker?.fname} {worker?.lname}
+          </Modal.Title>
+        </Modal.Header>
+        <Form onSubmit={handleSubmit}>
+          <Modal.Body style={{ maxHeight: '70vh', overflowY: 'auto' }}>
+            <Alert variant="info">
+              <FaInfoCircle className="me-2" />
+              You are sending a direct job request to this worker. Payment is required upfront before sending the request.
+            </Alert>
 
           <Form.Group className="mb-3">
             <Form.Label>Job Title <span className="text-danger">*</span></Form.Label>
@@ -223,6 +260,17 @@ const DirectHireModal = ({ show, worker, onSubmit, onClose }) => {
         </Modal.Footer>
       </Form>
     </Modal>
+
+    {pendingJobData && showPaymentModal && (
+      <DirectHirePaymentModal
+        show={showPaymentModal}
+        onHide={handlePaymentCancel}
+        jobData={pendingJobData}
+        worker={worker}
+        onSuccess={handlePaymentSuccess}
+      />
+    )}
+    </>
   );
 };
 

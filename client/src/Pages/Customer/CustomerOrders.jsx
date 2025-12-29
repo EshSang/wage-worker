@@ -6,6 +6,7 @@ import Footer from '../../Components/Footer';
 import axiosInstance from '../../api/axios';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import StripePaymentModal from '../../Components/StripePaymentModal';
 
 export default function CustomerOrders() {
   const [activeTab, setActiveTab] = useState('applications');
@@ -13,6 +14,10 @@ export default function CustomerOrders() {
   const [inProgressOrders, setInProgressOrders] = useState([]);
   const [completedOrders, setCompletedOrders] = useState([]);
   const [hiredWorkers, setHiredWorkers] = useState([]);
+
+  // Payment modal state
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [selectedApplication, setSelectedApplication] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
@@ -132,6 +137,22 @@ export default function CustomerOrders() {
       console.error("Error updating application status:", error);
       toast.error("Failed to update application status");
     }
+  };
+
+  // Handle accept and pay button click
+  const handleAcceptAndPay = (application) => {
+    setSelectedApplication(application);
+    setShowPaymentModal(true);
+  };
+
+  // Handle successful payment
+  const handlePaymentSuccess = (order) => {
+    setShowPaymentModal(false);
+    setSelectedApplication(null);
+    toast.success('Application accepted and order created successfully!');
+    // Refresh the lists
+    fetchApplicationsForMyJobs();
+    fetchInProgressOrders();
   };
 
   const getStatusColor = (status) => {
@@ -359,11 +380,31 @@ export default function CustomerOrders() {
                               </Button>
                             </>
                           )}
-                          {application.applicationStatus !== 'APPLIED' && application.applicationStatus !== 'PENDING' && (
-                            <div className="text-center p-3 bg-light rounded w-100">
+                          {application.applicationStatus === 'APPROVED' && !application.hasOrder && (
+                            <Button
+                              variant="primary"
+                              className="w-100"
+                              size="lg"
+                              onClick={() => handleAcceptAndPay(application)}
+                            >
+                              <FaCheckCircle className="me-2" />
+                              Accept & Pay
+                            </Button>
+                          )}
+                          {application.applicationStatus === 'APPROVED' && application.hasOrder && (
+                            <div className="text-center p-3 bg-success bg-opacity-10 rounded w-100">
+                              <div className="small text-muted">Payment Complete</div>
+                              <h5 className="mb-0 text-success">
+                                <FaCheckCircle className="me-2" />
+                                Order Created
+                              </h5>
+                            </div>
+                          )}
+                          {application.applicationStatus === 'REJECTED' && (
+                            <div className="text-center p-3 bg-danger bg-opacity-10 rounded w-100">
                               <div className="small text-muted">Application Status</div>
-                              <h5 className={`mb-0 text-${getStatusColor(application.applicationStatus)}`}>
-                                {application.applicationStatus}
+                              <h5 className="mb-0 text-danger">
+                                REJECTED
                               </h5>
                             </div>
                           )}
@@ -537,8 +578,8 @@ export default function CustomerOrders() {
                                   <FaBriefcase className="me-2" />
                                   {job.title || 'N/A'}
                                 </h5>
-                                <Badge bg="success" className="rounded-pill">
-                                  Hired
+                                <Badge bg={hire.applicationStatus === 'PENDING' ? 'warning' : 'success'} className="rounded-pill">
+                                  {hire.applicationStatus === 'PENDING' ? 'Pending' : 'Hired'}
                                 </Badge>
                                 {latestOrder && (
                                   <Badge bg={
@@ -616,9 +657,11 @@ export default function CustomerOrders() {
                             </Col>
 
                             <Col md={4} className="d-flex flex-column justify-content-center align-items-end gap-2">
-                              <div className="text-center p-3 bg-primary bg-opacity-10 rounded w-100">
+                              <div className={`text-center p-3 rounded w-100 ${hire.applicationStatus === 'PENDING' ? 'bg-warning bg-opacity-10' : 'bg-primary bg-opacity-10'}`}>
                                 <div className="small text-muted mb-2">Direct Hire Status</div>
-                                <h6 className="mb-1 text-primary">Worker Accepted</h6>
+                                <h6 className={`mb-1 ${hire.applicationStatus === 'PENDING' ? 'text-warning' : 'text-primary'}`}>
+                                  {hire.applicationStatus === 'PENDING' ? 'Pending Worker Response' : 'Worker Accepted'}
+                                </h6>
                                 {latestOrder ? (
                                   <>
                                     <div className="small text-muted mt-2">
@@ -632,7 +675,7 @@ export default function CustomerOrders() {
                                   </>
                                 ) : (
                                   <p className="small text-muted mb-0 mt-2">
-                                    No active orders yet
+                                    {hire.applicationStatus === 'PENDING' ? 'Waiting for worker to accept' : 'No active orders yet'}
                                   </p>
                                 )}
                               </div>
@@ -766,6 +809,15 @@ export default function CustomerOrders() {
           </Tabs>
         </Container>
       </div>
+
+      {/* Stripe Payment Modal */}
+      <StripePaymentModal
+        show={showPaymentModal}
+        onHide={() => setShowPaymentModal(false)}
+        application={selectedApplication}
+        onSuccess={handlePaymentSuccess}
+      />
+
       <Footer />
 
       {/* Review Modal */}

@@ -1,14 +1,18 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
+const paymentService = require('./payment.service');
 
 class OrderService {
   /**
-   * Create an order from an accepted application
+   * Create an order from an accepted application with payment verification
    * @param {number} applicationId - The job application ID
    * @param {number} userId - The user ID (should be customer)
+   * @param {string} paymentIntentId - The Stripe Payment Intent ID
    * @returns {Promise<Object>} The created order
    */
-  async createOrderFromApplication(applicationId, userId) {
+  async createOrderFromApplication(applicationId, userId, paymentIntentId) {
+    console.log(`[${new Date().toISOString()}] Creating order - Application: ${applicationId}, User: ${userId}, Payment: ${paymentIntentId}`);
+
     // First, get the application details
     const application = await prisma.jobApplication.findUnique({
       where: { id: applicationId },
@@ -38,10 +42,24 @@ class OrderService {
     });
 
     if (existingOrder) {
-      return existingOrder;
+      throw new Error('Order already exists for this application');
     }
 
-    // Create the order with ACCEPTED status so worker can start immediately
+    // VERIFY PAYMENT before creating order
+    if (!paymentIntentId) {
+      throw new Error('Payment Intent ID is required');
+    }
+
+    console.log(`[${new Date().toISOString()}] Verifying payment before creating order`);
+    const paymentVerification = await paymentService.verifyPayment(paymentIntentId);
+
+    if (!paymentVerification.verified) {
+      throw new Error('Payment verification failed');
+    }
+
+    console.log(`[${new Date().toISOString()}] Payment verified - Creating order`);
+
+    // Create the order with ACCEPTED status and payment information
     const order = await prisma.order.create({
       data: {
         jobApplicationId: applicationId,
@@ -49,6 +67,12 @@ class OrderService {
         userId: application.userId, // The worker ID
         acceptedDate: new Date(),
         status: 'ACCEPTED', // Set to ACCEPTED so worker can start work immediately
+
+        // Payment fields
+        paymentIntentId: paymentIntentId,
+        paymentStatus: 'COMPLETED',
+        paidAmount: paymentVerification.amount,
+        paymentDate: new Date(),
       },
       include: {
         job: true,
@@ -56,6 +80,8 @@ class OrderService {
         jobApplication: true,
       },
     });
+
+    console.log(`[${new Date().toISOString()}] Order created successfully - ID: ${order.id}`);
 
     return order;
   }

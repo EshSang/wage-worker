@@ -8,7 +8,7 @@ const notificationService = require('../services/notification.service');
 async function createDirectHireRequest(req, res) {
   try {
     const customerId = req.user.id;
-    const { workerId, title, description, categoryId, location, hourlyRate, skills } = req.body;
+    const { workerId, title, description, categoryId, location, hourlyRate, skills, paymentIntentId } = req.body;
 
     // Validation
     if (!workerId || !title || !description || !categoryId || !location || !hourlyRate) {
@@ -18,10 +18,18 @@ async function createDirectHireRequest(req, res) {
       });
     }
 
+    if (!paymentIntentId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Payment Intent ID is required'
+      });
+    }
+
     const result = await directHireService.createDirectHireRequest(
       customerId,
       workerId,
-      { title, description, categoryId, location, hourlyRate, skills }
+      { title, description, categoryId, location, hourlyRate, skills },
+      paymentIntentId
     );
 
     // Send notification to worker (if notification service exists)

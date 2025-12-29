@@ -64,6 +64,7 @@ model JobApplication {
   appliedDate       DateTime   @db.Date
   applicationStatus JobStatus  @default(APPLIED)
   applicationType   String     @default("MANUAL") @db.VarChar(50)
+  paymentIntentId   String?    @db.VarChar(255)
   earnings          Earning[]
   job               Job        @relation(fields: [jobId], references: [id], map: "JobApplication_jobId_fkey")
   user              User       @relation(fields: [userId], references: [id], map: "JobApplication_userId_fkey")
@@ -71,6 +72,7 @@ model JobApplication {
 
   @@index([jobId], map: "JobApplication_jobId_fkey")
   @@index([userId], map: "JobApplication_userId_fkey")
+  @@index([paymentIntentId], map: "JobApplication_paymentIntentId_idx")
   @@map("jobapplication")
 }
 
@@ -110,6 +112,10 @@ model Order {
   completedDate           DateTime?      @db.Date
   estimatedCompletionDate DateTime?      @db.Date
   status                  OrderStatus    @default(PENDING)
+  paymentIntentId         String?        @db.VarChar(255)
+  paymentStatus           PaymentStatus? @default(PENDING)
+  paidAmount              Decimal?       @db.Decimal(10, 2)
+  paymentDate             DateTime?      @db.DateTime
   earning                 Earning?
   jobApplication          JobApplication @relation(fields: [jobApplicationId], references: [id], map: "Order_jobApplicationId_fkey")
   job                     Job            @relation(fields: [jobId], references: [id], map: "Order_jobId_fkey")
@@ -119,6 +125,7 @@ model Order {
   @@index([jobApplicationId], map: "Order_jobApplicationId_fkey")
   @@index([jobId], map: "Order_jobId_fkey")
   @@index([userId], map: "Order_userId_fkey")
+  @@index([paymentIntentId], map: "Order_paymentIntentId_idx")
   @@map("order")
 }
 
@@ -195,6 +202,15 @@ enum OrderStatus {
   CANCELLED
 
   @@map("order_status")
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+
+  @@map("payment_status")
 }
 
 enum UserType {
