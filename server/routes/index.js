@@ -14,6 +14,7 @@ const workerRoutes = require('./worker.routes');
 const directHireRoutes = require('./directHire.routes');
 const adminRoutes = require('./admin.routes');
 const paymentRoutes = require('./payment.routes');
+const reviewerRoutes = require('./reviewer.routes');
 
 // Mount routes
 router.use('/auth', authRoutes);
@@ -29,6 +30,7 @@ router.use('/workers', workerRoutes);
 router.use('/direct-hire', directHireRoutes);
 router.use('/admin', adminRoutes);
 router.use('/payments', paymentRoutes);
+router.use('/reviewer', reviewerRoutes);
 
 // Health check
 router.get('/healthcheck', (req, res) => {

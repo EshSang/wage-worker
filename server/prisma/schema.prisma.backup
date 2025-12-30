@@ -44,22 +44,16 @@ model Job {
   categoryId      Int
   jobType         String           @default("PUBLIC") @db.VarChar(50)
   targetWorkerId  Int?
-  approvalStatus  String           @default("PENDING") @db.VarChar(50)
-  reviewedBy      Int?
-  reviewedAt      DateTime?        @db.DateTime(0)
   earnings        Earning[]
   category        JobCategory      @relation(fields: [categoryId], references: [id], map: "Job_categoryId_fkey")
   createdUser     User             @relation("Job_createdUser", fields: [createdUserId], references: [id], map: "Job_createdUserId_fkey")
   targetWorker    User?            @relation("Job_targetWorker", fields: [targetWorkerId], references: [id], map: "Job_targetWorkerId_fkey")
-  reviewer        User?            @relation("Job_reviewer", fields: [reviewedBy], references: [id], map: "Job_reviewedBy_fkey")
   jobApplications JobApplication[]
   orders          Order[]
 
   @@index([categoryId], map: "Job_categoryId_fkey")
   @@index([createdUserId], map: "Job_createdUserId_fkey")
   @@index([targetWorkerId], map: "Job_targetWorkerId_fkey")
-  @@index([reviewedBy], map: "Job_reviewedBy_fkey")
-  @@index([approvalStatus], map: "Job_approvalStatus_idx")
   @@map("job")
 }
 
@@ -136,25 +130,19 @@ model Order {
 }
 
 model Review {
-  id             Int       @id @default(autoincrement())
-  orderId        Int
-  reviewerId     Int
-  rating         Int
-  comment        String    @db.VarChar(1000)
-  workerReply    String?   @db.VarChar(1000)
-  repliedAt      DateTime? @db.Date
-  createdAt      DateTime  @db.Date
-  approvalStatus String    @default("PENDING") @db.VarChar(50)
-  reviewedBy     Int?
-  reviewedAt     DateTime? @db.DateTime(0)
-  order          Order     @relation(fields: [orderId], references: [id], map: "Review_orderId_fkey")
-  reviewer       User      @relation("Review_reviewer", fields: [reviewerId], references: [id], map: "Review_reviewerId_fkey")
-  approver       User?     @relation("Review_approver", fields: [reviewedBy], references: [id], map: "Review_reviewedBy_fkey")
+  id          Int       @id @default(autoincrement())
+  orderId     Int
+  reviewerId  Int
+  rating      Int
+  comment     String    @db.VarChar(1000)
+  workerReply String?   @db.VarChar(1000)
+  repliedAt   DateTime? @db.Date
+  createdAt   DateTime  @db.Date
+  order       Order     @relation(fields: [orderId], references: [id], map: "Review_orderId_fkey")
+  reviewer    User      @relation(fields: [reviewerId], references: [id], map: "Review_reviewerId_fkey")
 
   @@index([orderId], map: "Review_orderId_fkey")
   @@index([reviewerId], map: "Review_reviewerId_fkey")
-  @@index([reviewedBy], map: "Review_reviewedBy_fkey")
-  @@index([approvalStatus], map: "Review_approvalStatus_idx")
   @@map("review")
 }
 
@@ -173,12 +161,10 @@ model User {
   earnings        Earning[]        @relation("Earning_workerIdToUser")
   jobs            Job[]            @relation("Job_createdUser")
   directHireJobs  Job[]            @relation("Job_targetWorker")
-  reviewedJobs    Job[]            @relation("Job_reviewer")
   jobApplications JobApplication[]
   notifications   Notification[]
   orders          Order[]
-  reviews         Review[]         @relation("Review_reviewer")
-  approvedReviews Review[]         @relation("Review_approver")
+  reviews         Review[]
 
   @@map("user")
 }
