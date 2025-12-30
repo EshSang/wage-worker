@@ -194,6 +194,92 @@ async function deleteUser(req, res) {
   }
 }
 
+/**
+ * Get all jobs with filters (Admin)
+ * GET /api/admin/jobs?search=plumbing&status=Open&categoryId=1&date=2025-12-20&page=1&limit=20
+ */
+async function getAllJobs(req, res) {
+  try {
+    const { search, status, categoryId, date, page, limit } = req.query;
+
+    const filters = {};
+    if (search) filters.search = search;
+    if (status) filters.status = status;
+    if (categoryId) filters.categoryId = categoryId;
+    if (date) filters.date = date;
+    if (page) filters.page = parseInt(page);
+    if (limit) filters.limit = parseInt(limit);
+
+    const result = await adminService.getAllJobs(filters);
+
+    res.status(200).json({
+      success: true,
+      message: 'Jobs retrieved successfully',
+      data: result,
+    });
+  } catch (error) {
+    console.error('Get all jobs error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Failed to retrieve jobs',
+    });
+  }
+}
+
+/**
+ * Get job statistics (Admin)
+ * GET /api/admin/jobs/statistics
+ */
+async function getJobStatistics(req, res) {
+  try {
+    const stats = await adminService.getJobStatistics();
+
+    res.status(200).json({
+      success: true,
+      message: 'Job statistics retrieved successfully',
+      data: stats,
+    });
+  } catch (error) {
+    console.error('Get job statistics error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Failed to retrieve statistics',
+    });
+  }
+}
+
+/**
+ * Get single job by ID (Admin)
+ * GET /api/admin/jobs/:jobId
+ */
+async function getJobById(req, res) {
+  try {
+    const { jobId } = req.params;
+
+    if (!jobId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Job ID is required',
+      });
+    }
+
+    const job = await adminService.getJobById(jobId);
+
+    res.status(200).json({
+      success: true,
+      message: 'Job details retrieved successfully',
+      data: job,
+    });
+  } catch (error) {
+    console.error('Get job by ID error:', error);
+    const statusCode = error.message === 'Job not found' ? 404 : 500;
+    res.status(statusCode).json({
+      success: false,
+      message: error.message || 'Failed to retrieve job details',
+    });
+  }
+}
+
 module.exports = {
   getAllUsers,
   getUserStatistics,
@@ -201,4 +287,7 @@ module.exports = {
   createUser,
   updateUser,
   deleteUser,
+  getAllJobs,
+  getJobStatistics,
+  getJobById,
 };

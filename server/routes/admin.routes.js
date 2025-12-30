@@ -16,4 +16,9 @@ router.post('/users', adminController.createUser);
 router.put('/users/:userId', adminController.updateUser);
 router.delete('/users/:userId', adminController.deleteUser);
 
+// Job management routes
+router.get('/jobs/statistics', adminController.getJobStatistics);
+router.get('/jobs/:jobId', adminController.getJobById);
+router.get('/jobs', adminController.getAllJobs);
+
 module.exports = router;

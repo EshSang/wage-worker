@@ -328,6 +328,210 @@ async function deleteUser(userId) {
   }
 }
 
+/**
+ * Get all jobs with filters and pagination (Admin)
+ */
+async function getAllJobs(filters = {}) {
+  try {
+    const { search, status, categoryId, date, page = 1, limit = 20 } = filters;
+
+    const where = {};
+
+    // Search filter (job title or customer name)
+    if (search) {
+      where.OR = [
+        { title: { contains: search } },
+        {
+          createdUser: {
+            OR: [
+              { fname: { contains: search } },
+              { lname: { contains: search } },
+            ]
+          }
+        }
+      ];
+    }
+
+    // Status filter
+    if (status && status !== 'All') {
+      where.status = status;
+    }
+
+    // Category filter
+    if (categoryId && categoryId !== 'All') {
+      where.categoryId = parseInt(categoryId);
+    }
+
+    // Date filter
+    if (date) {
+      const filterDate = new Date(date);
+      const nextDay = new Date(filterDate);
+      nextDay.setDate(nextDay.getDate() + 1);
+
+      where.postedDate = {
+        gte: filterDate,
+        lt: nextDay
+      };
+    }
+
+    const skip = (page - 1) * limit;
+
+    const [jobs, totalCount] = await Promise.all([
+      prisma.job.findMany({
+        where,
+        include: {
+          category: true,
+          createdUser: {
+            select: {
+              id: true,
+              fname: true,
+              lname: true,
+              email: true,
+            }
+          },
+          orders: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  fname: true,
+                  lname: true,
+                  email: true,
+                }
+              }
+            },
+            orderBy: {
+              acceptedDate: 'desc'
+            },
+            take: 1
+          },
+          _count: {
+            select: {
+              jobApplications: true,
+              orders: true,
+            }
+          }
+        },
+        orderBy: {
+          postedDate: 'desc'
+        },
+        skip,
+        take: limit,
+      }),
+      prisma.job.count({ where })
+    ]);
+
+    return {
+      jobs,
+      pagination: {
+        totalCount,
+        totalPages: Math.ceil(totalCount / limit),
+        currentPage: page,
+        pageSize: limit,
+      }
+    };
+  } catch (error) {
+    console.error('Error in getAllJobs:', error);
+    throw error;
+  }
+}
+
+/**
+ * Get job statistics (Admin)
+ */
+async function getJobStatistics() {
+  try {
+    const [
+      totalJobs,
+      activeJobs,
+      completedJobs,
+      cancelledJobs,
+    ] = await Promise.all([
+      prisma.job.count(),
+      prisma.order.count({ where: { status: 'ACCEPTED' } }),
+      prisma.order.count({ where: { status: 'COMPLETED' } }),
+      prisma.order.count({ where: { status: 'CANCELLED' } }),
+    ]);
+
+    return {
+      totalJobs,
+      activeJobs,
+      completedJobs,
+      cancelledJobs,
+    };
+  } catch (error) {
+    console.error('Error in getJobStatistics:', error);
+    throw error;
+  }
+}
+
+/**
+ * Get single job by ID (Admin)
+ */
+async function getJobById(jobId) {
+  try {
+    const job = await prisma.job.findUnique({
+      where: { id: parseInt(jobId) },
+      include: {
+        category: true,
+        createdUser: {
+          select: {
+            id: true,
+            fname: true,
+            lname: true,
+            email: true,
+            phonenumber: true,
+            address: true,
+          }
+        },
+        jobApplications: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                fname: true,
+                lname: true,
+                email: true,
+                phonenumber: true,
+                skills: true,
+              }
+            }
+          },
+          orderBy: {
+            appliedDate: 'desc'
+          }
+        },
+        orders: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                fname: true,
+                lname: true,
+                email: true,
+                phonenumber: true,
+              }
+            },
+            reviews: true,
+          },
+          orderBy: {
+            acceptedDate: 'desc'
+          }
+        }
+      }
+    });
+
+    if (!job) {
+      throw new Error('Job not found');
+    }
+
+    return job;
+  } catch (error) {
+    console.error('Error in getJobById:', error);
+    throw error;
+  }
+}
+
 module.exports = {
   getAllUsers,
   getUserStatistics,
@@ -335,4 +539,7 @@ module.exports = {
   createUser,
   updateUser,
   deleteUser,
+  getAllJobs,
+  getJobStatistics,
+  getJobById,
 };
