@@ -137,8 +137,14 @@ class OrderService {
    * @returns {Promise<Array>} List of orders
    */
   async getOrdersByWorkerId(userId) {
+    // Get all orders for the worker (excluding completed ones)
     const orders = await prisma.order.findMany({
-      where: { userId },
+      where: {
+        userId,
+        status: {
+          not: 'COMPLETED' // Exclude completed orders
+        }
+      },
       include: {
         job: {
           include: {
@@ -161,7 +167,63 @@ class OrderService {
       },
     });
 
-    return orders;
+    // Get IDs of applications that already have non-completed orders
+    const applicationIdsWithOrders = orders.map(order => order.jobApplicationId).filter(Boolean);
+
+    // Get pending job applications that don't have non-completed orders yet
+    const pendingApplications = await prisma.jobApplication.findMany({
+      where: {
+        userId,
+        applicationStatus: 'APPLIED',
+        id: {
+          notIn: applicationIdsWithOrders // Exclude applications that already have active orders
+        }
+      },
+      include: {
+        job: {
+          include: {
+            createdUser: {
+              select: {
+                id: true,
+                fname: true,
+                lname: true,
+                email: true,
+                phonenumber: true,
+              },
+            },
+            category: true,
+          },
+        },
+      },
+      orderBy: {
+        appliedDate: 'desc',
+      },
+    });
+
+    // Convert pending applications to order-like format
+    const pendingOrders = pendingApplications.map(app => ({
+      id: `app-${app.id}`, // Use string ID to differentiate from real orders
+      jobApplicationId: app.id,
+      jobId: app.jobId,
+      userId: app.userId,
+      acceptedDate: app.appliedDate,
+      status: 'PENDING',
+      startedDate: null,
+      completedDate: null,
+      estimatedCompletionDate: null,
+      job: app.job,
+      jobApplication: app,
+      isPendingApplication: true, // Flag to identify these as applications
+    }));
+
+    // Combine and sort by date
+    const allOrders = [...orders, ...pendingOrders].sort((a, b) => {
+      const dateA = new Date(a.acceptedDate || a.appliedDate);
+      const dateB = new Date(b.acceptedDate || b.appliedDate);
+      return dateB - dateA; // Most recent first
+    });
+
+    return allOrders;
   }
 
   /**

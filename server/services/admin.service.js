@@ -532,6 +532,218 @@ async function getJobById(jobId) {
   }
 }
 
+/**
+ * Get all earnings with filters and pagination (Admin)
+ */
+async function getAllEarnings(filters = {}) {
+  try {
+    const { status, categoryId, fromDate, toDate, page = 1, limit = 20 } = filters;
+
+    const where = {};
+
+    // Status filter
+    if (status && status !== 'All') {
+      where.status = status;
+    }
+
+    // Category filter
+    if (categoryId && categoryId !== 'All') {
+      where.job = {
+        categoryId: parseInt(categoryId)
+      };
+    }
+
+    // Date range filter
+    if (fromDate || toDate) {
+      where.earnedDate = {};
+      if (fromDate) {
+        where.earnedDate.gte = new Date(fromDate);
+      }
+      if (toDate) {
+        const endDate = new Date(toDate);
+        endDate.setHours(23, 59, 59, 999);
+        where.earnedDate.lte = endDate;
+      }
+    }
+
+    const skip = (page - 1) * limit;
+
+    const [earnings, totalCount] = await Promise.all([
+      prisma.earning.findMany({
+        where,
+        include: {
+          job: {
+            include: {
+              category: true,
+            }
+          },
+          worker: {
+            select: {
+              id: true,
+              fname: true,
+              lname: true,
+              email: true,
+            }
+          },
+          customer: {
+            select: {
+              id: true,
+              fname: true,
+              lname: true,
+              email: true,
+            }
+          },
+          order: {
+            select: {
+              id: true,
+              status: true,
+            }
+          }
+        },
+        orderBy: {
+          earnedDate: 'desc'
+        },
+        skip,
+        take: limit,
+      }),
+      prisma.earning.count({ where })
+    ]);
+
+    return {
+      earnings,
+      pagination: {
+        totalCount,
+        totalPages: Math.ceil(totalCount / limit),
+        currentPage: page,
+        pageSize: limit,
+      }
+    };
+  } catch (error) {
+    console.error('Error in getAllEarnings:', error);
+    throw error;
+  }
+}
+
+/**
+ * Get earnings statistics (Admin)
+ */
+async function getEarningsStatistics() {
+  try {
+    const [
+      totalEarningsResult,
+      completedOrdersCount,
+    ] = await Promise.all([
+      prisma.earning.aggregate({
+        _sum: {
+          amount: true
+        }
+      }),
+      prisma.earning.count({
+        where: {
+          status: 'COMPLETED'
+        }
+      }),
+    ]);
+
+    return {
+      totalEarnings: totalEarningsResult._sum.amount || 0,
+      completedOrders: completedOrdersCount,
+    };
+  } catch (error) {
+    console.error('Error in getEarningsStatistics:', error);
+    throw error;
+  }
+}
+
+/**
+ * Get dashboard statistics (Admin)
+ */
+async function getDashboardStatistics() {
+  try {
+    const [
+      activeUsersCount,
+      postedJobsCount,
+      activeBookingsCount,
+      totalRevenueResult,
+    ] = await Promise.all([
+      // Active users (only USER type, excluding admins and reviewers)
+      prisma.user.count({
+        where: {
+          usertype: 'USER'
+        }
+      }),
+      // Total jobs posted
+      prisma.job.count(),
+      // Active bookings (orders with status ACCEPTED)
+      prisma.order.count({
+        where: {
+          status: 'ACCEPTED'
+        }
+      }),
+      // Total revenue from completed earnings
+      prisma.earning.aggregate({
+        where: {
+          status: 'COMPLETED'
+        },
+        _sum: {
+          amount: true
+        }
+      }),
+    ]);
+
+    return {
+      activeUsers: activeUsersCount,
+      postedJobs: postedJobsCount,
+      activeBookings: activeBookingsCount,
+      totalRevenue: totalRevenueResult._sum.amount || 0,
+    };
+  } catch (error) {
+    console.error('Error in getDashboardStatistics:', error);
+    throw error;
+  }
+}
+
+/**
+ * Get recent job requests (Admin)
+ */
+async function getRecentJobRequests(limit = 10) {
+  try {
+    const recentJobs = await prisma.job.findMany({
+      take: limit,
+      orderBy: {
+        postedDate: 'desc'
+      },
+      include: {
+        category: true,
+        createdUser: {
+          select: {
+            id: true,
+            fname: true,
+            lname: true,
+            email: true,
+          }
+        },
+        orders: {
+          orderBy: {
+            acceptedDate: 'desc'
+          },
+          take: 1
+        },
+        _count: {
+          select: {
+            jobApplications: true
+          }
+        }
+      }
+    });
+
+    return recentJobs;
+  } catch (error) {
+    console.error('Error in getRecentJobRequests:', error);
+    throw error;
+  }
+}
+
 module.exports = {
   getAllUsers,
   getUserStatistics,
@@ -542,4 +754,8 @@ module.exports = {
   getAllJobs,
   getJobStatistics,
   getJobById,
+  getAllEarnings,
+  getEarningsStatistics,
+  getDashboardStatistics,
+  getRecentJobRequests,
 };

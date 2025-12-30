@@ -280,6 +280,107 @@ async function getJobById(req, res) {
   }
 }
 
+/**
+ * Get all earnings with filters (Admin)
+ * GET /api/admin/earnings?status=COMPLETED&categoryId=1&fromDate=2025-01-01&toDate=2025-12-31&page=1&limit=20
+ */
+async function getAllEarnings(req, res) {
+  try {
+    const { status, categoryId, fromDate, toDate, page, limit } = req.query;
+
+    const filters = {};
+    if (status) filters.status = status;
+    if (categoryId) filters.categoryId = categoryId;
+    if (fromDate) filters.fromDate = fromDate;
+    if (toDate) filters.toDate = toDate;
+    if (page) filters.page = parseInt(page);
+    if (limit) filters.limit = parseInt(limit);
+
+    const result = await adminService.getAllEarnings(filters);
+
+    res.status(200).json({
+      success: true,
+      message: 'Earnings retrieved successfully',
+      data: result,
+    });
+  } catch (error) {
+    console.error('Get all earnings error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Failed to retrieve earnings',
+    });
+  }
+}
+
+/**
+ * Get earnings statistics (Admin)
+ * GET /api/admin/earnings/statistics
+ */
+async function getEarningsStatistics(req, res) {
+  try {
+    const stats = await adminService.getEarningsStatistics();
+
+    res.status(200).json({
+      success: true,
+      message: 'Earnings statistics retrieved successfully',
+      data: stats,
+    });
+  } catch (error) {
+    console.error('Get earnings statistics error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Failed to retrieve statistics',
+    });
+  }
+}
+
+/**
+ * Get dashboard statistics (Admin)
+ * GET /api/admin/dashboard/statistics
+ */
+async function getDashboardStatistics(req, res) {
+  try {
+    const stats = await adminService.getDashboardStatistics();
+
+    res.status(200).json({
+      success: true,
+      message: 'Dashboard statistics retrieved successfully',
+      data: stats,
+    });
+  } catch (error) {
+    console.error('Get dashboard statistics error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Failed to retrieve dashboard statistics',
+    });
+  }
+}
+
+/**
+ * Get recent job requests (Admin)
+ * GET /api/admin/dashboard/recent-jobs?limit=10
+ */
+async function getRecentJobRequests(req, res) {
+  try {
+    const { limit } = req.query;
+    const limitNum = limit ? parseInt(limit) : 10;
+
+    const jobs = await adminService.getRecentJobRequests(limitNum);
+
+    res.status(200).json({
+      success: true,
+      message: 'Recent job requests retrieved successfully',
+      data: jobs,
+    });
+  } catch (error) {
+    console.error('Get recent job requests error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Failed to retrieve recent job requests',
+    });
+  }
+}
+
 module.exports = {
   getAllUsers,
   getUserStatistics,
@@ -290,4 +391,8 @@ module.exports = {
   getAllJobs,
   getJobStatistics,
   getJobById,
+  getAllEarnings,
+  getEarningsStatistics,
+  getDashboardStatistics,
+  getRecentJobRequests,
 };
