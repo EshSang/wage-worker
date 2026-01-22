@@ -275,15 +275,26 @@ async function rejectDirectHireRequest(workerId, applicationId, reason) {
 
 /**
  * Get all direct hire requests for a worker
+ * @param {number} workerId - The worker user ID
+ * @param {string|Array} status - Single status string or array of statuses (default: 'PENDING')
  */
 async function getWorkerDirectHireRequests(workerId, status = 'PENDING') {
   try {
+    // Build where clause based on status parameter
+    const whereClause = {
+      userId: workerId,
+      applicationType: 'DIRECT_HIRE',
+    };
+
+    // Handle both single status and array of statuses
+    if (Array.isArray(status)) {
+      whereClause.applicationStatus = { in: status };
+    } else {
+      whereClause.applicationStatus = status;
+    }
+
     const requests = await prisma.jobApplication.findMany({
-      where: {
-        userId: workerId,
-        applicationType: 'DIRECT_HIRE',
-        applicationStatus: status,
-      },
+      where: whereClause,
       include: {
         job: {
           include: {
@@ -297,6 +308,14 @@ async function getWorkerDirectHireRequests(workerId, status = 'PENDING') {
               }
             },
             category: true,
+          }
+        },
+        orders: {
+          include: {
+            reviews: true,
+          },
+          orderBy: {
+            acceptedDate: 'desc'
           }
         }
       },

@@ -8,21 +8,21 @@ datasource db {
 }
 
 model Earning {
-  id                            Int            @id @default(autoincrement())
-  jobApplicationId              Int
-  jobId                         Int
-  workerId                      Int
-  customerId                    Int
-  amount                        Int
-  earnedDate                    DateTime       @default(now()) @db.DateTime(0)
-  paymentGatewayId              String?        @db.VarChar(255)
-  status                        String         @default("COMPLETED") @db.VarChar(50)
-  orderId                       Int?           @unique(map: "Earning_orderId_key")
-  customer                      User           @relation("Earning_customerIdToUser", fields: [customerId], references: [id], map: "Earning_customerId_fkey")
-  jobApplication                JobApplication @relation(fields: [jobApplicationId], references: [id], map: "Earning_jobApplicationId_fkey")
-  job                           Job            @relation(fields: [jobId], references: [id], map: "Earning_jobId_fkey")
-  order                         Order?         @relation(fields: [orderId], references: [id], map: "Earning_orderId_fkey")
-  worker                        User           @relation("Earning_workerIdToUser", fields: [workerId], references: [id], map: "Earning_workerId_fkey")
+  id               Int            @id @default(autoincrement())
+  jobApplicationId Int
+  jobId            Int
+  workerId         Int
+  customerId       Int
+  amount           Int
+  earnedDate       DateTime       @default(now()) @db.DateTime(0)
+  paymentGatewayId String?        @db.VarChar(255)
+  status           String         @default("COMPLETED") @db.VarChar(50)
+  orderId          Int?           @unique(map: "Earning_orderId_key")
+  customer         User           @relation("Earning_customerIdToUser", fields: [customerId], references: [id], map: "Earning_customerId_fkey")
+  jobApplication   JobApplication @relation(fields: [jobApplicationId], references: [id], map: "Earning_jobApplicationId_fkey")
+  job              Job            @relation(fields: [jobId], references: [id], map: "Earning_jobId_fkey")
+  order            Order?         @relation(fields: [orderId], references: [id], map: "Earning_orderId_fkey")
+  worker           User           @relation("Earning_workerIdToUser", fields: [workerId], references: [id], map: "Earning_workerId_fkey")
 
   @@index([customerId, earnedDate], map: "Earning_customerId_earnedDate_idx")
   @@index([jobApplicationId], map: "Earning_jobApplicationId_fkey")
@@ -45,13 +45,14 @@ model Job {
   jobType         String           @default("PUBLIC") @db.VarChar(50)
   targetWorkerId  Int?
   approvalStatus  String           @default("PENDING") @db.VarChar(50)
-  reviewedBy      Int?
   reviewedAt      DateTime?        @db.DateTime(0)
+  reviewedBy      Int?
+  reviewNotes     String?          @db.VarChar(1000)
   earnings        Earning[]
   category        JobCategory      @relation(fields: [categoryId], references: [id], map: "Job_categoryId_fkey")
   createdUser     User             @relation("Job_createdUser", fields: [createdUserId], references: [id], map: "Job_createdUserId_fkey")
-  targetWorker    User?            @relation("Job_targetWorker", fields: [targetWorkerId], references: [id], map: "Job_targetWorkerId_fkey")
   reviewer        User?            @relation("Job_reviewer", fields: [reviewedBy], references: [id], map: "Job_reviewedBy_fkey")
+  targetWorker    User?            @relation("Job_targetWorker", fields: [targetWorkerId], references: [id], map: "Job_targetWorkerId_fkey")
   jobApplications JobApplication[]
   orders          Order[]
 
@@ -64,16 +65,16 @@ model Job {
 }
 
 model JobApplication {
-  id                Int        @id @default(autoincrement())
+  id                Int       @id @default(autoincrement())
   jobId             Int
   userId            Int
-  appliedDate       DateTime   @db.Date
-  applicationStatus JobStatus  @default(APPLIED)
-  applicationType   String     @default("MANUAL") @db.VarChar(50)
-  paymentIntentId   String?    @db.VarChar(255)
+  appliedDate       DateTime  @db.Date
+  applicationStatus JobStatus @default(APPLIED)
+  applicationType   String    @default("MANUAL") @db.VarChar(50)
+  paymentIntentId   String?   @db.VarChar(255)
   earnings          Earning[]
-  job               Job        @relation(fields: [jobId], references: [id], map: "JobApplication_jobId_fkey")
-  user              User       @relation(fields: [userId], references: [id], map: "JobApplication_userId_fkey")
+  job               Job       @relation(fields: [jobId], references: [id], map: "JobApplication_jobId_fkey")
+  user              User      @relation(fields: [userId], references: [id], map: "JobApplication_userId_fkey")
   orders            Order[]
 
   @@index([jobId], map: "JobApplication_jobId_fkey")
@@ -118,10 +119,10 @@ model Order {
   completedDate           DateTime?      @db.Date
   estimatedCompletionDate DateTime?      @db.Date
   status                  OrderStatus    @default(PENDING)
+  paidAmount              Decimal?       @db.Decimal(10, 2)
+  paymentDate             DateTime?      @db.DateTime(0)
   paymentIntentId         String?        @db.VarChar(255)
   paymentStatus           PaymentStatus? @default(PENDING)
-  paidAmount              Decimal?       @db.Decimal(10, 2)
-  paymentDate             DateTime?      @db.DateTime
   earning                 Earning?
   jobApplication          JobApplication @relation(fields: [jobApplicationId], references: [id], map: "Order_jobApplicationId_fkey")
   job                     Job            @relation(fields: [jobId], references: [id], map: "Order_jobId_fkey")
@@ -145,11 +146,11 @@ model Review {
   repliedAt      DateTime? @db.Date
   createdAt      DateTime  @db.Date
   approvalStatus String    @default("PENDING") @db.VarChar(50)
-  reviewedBy     Int?
   reviewedAt     DateTime? @db.DateTime(0)
+  reviewedBy     Int?
   order          Order     @relation(fields: [orderId], references: [id], map: "Review_orderId_fkey")
-  reviewer       User      @relation("Review_reviewer", fields: [reviewerId], references: [id], map: "Review_reviewerId_fkey")
   approver       User?     @relation("Review_approver", fields: [reviewedBy], references: [id], map: "Review_reviewedBy_fkey")
+  reviewer       User      @relation("Review_reviewer", fields: [reviewerId], references: [id], map: "Review_reviewerId_fkey")
 
   @@index([orderId], map: "Review_orderId_fkey")
   @@index([reviewerId], map: "Review_reviewerId_fkey")
@@ -172,13 +173,14 @@ model User {
   paymentsGiven   Earning[]        @relation("Earning_customerIdToUser")
   earnings        Earning[]        @relation("Earning_workerIdToUser")
   jobs            Job[]            @relation("Job_createdUser")
-  directHireJobs  Job[]            @relation("Job_targetWorker")
   reviewedJobs    Job[]            @relation("Job_reviewer")
+  directHireJobs  Job[]            @relation("Job_targetWorker")
   jobApplications JobApplication[]
   notifications   Notification[]
   orders          Order[]
-  reviews         Review[]         @relation("Review_reviewer")
   approvedReviews Review[]         @relation("Review_approver")
+  reviews         Review[]         @relation("Review_reviewer")
+  chatSessions    ChatSession[]
 
   @@map("user")
 }
@@ -233,4 +235,40 @@ enum UserType {
   REVIEWER
 
   @@map("user_usertype")
+}
+
+// AI Chat Models
+model ChatSession {
+  id        Int           @id @default(autoincrement())
+  userId    Int
+  title     String?       @db.VarChar(255)
+  createdAt DateTime      @default(now()) @db.DateTime(0)
+  updatedAt DateTime      @updatedAt @db.DateTime(0)
+  user      User          @relation(fields: [userId], references: [id], map: "ChatSession_userId_fkey")
+  messages  ChatMessage[]
+
+  @@index([userId], map: "ChatSession_userId_idx")
+  @@map("chat_session")
+}
+
+model ChatMessage {
+  id           Int          @id @default(autoincrement())
+  sessionId    Int
+  role         MessageRole  @default(USER)
+  content      String       @db.Text
+  intent       String?      @db.VarChar(50)  // SEARCH_WORKER, SEARCH_JOB, GENERAL, etc.
+  metadata     Json?        // Store extracted entities, search params, results count
+  createdAt    DateTime     @default(now()) @db.DateTime(0)
+  session      ChatSession  @relation(fields: [sessionId], references: [id], onDelete: Cascade, map: "ChatMessage_sessionId_fkey")
+
+  @@index([sessionId], map: "ChatMessage_sessionId_idx")
+  @@map("chat_message")
+}
+
+enum MessageRole {
+  USER
+  ASSISTANT
+  SYSTEM
+
+  @@map("message_role")
 }

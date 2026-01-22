@@ -1,33 +1,17 @@
 const express = require('express');
 const router = express.Router();
-const reviewerController = require('../controllers/reviewer.controller');
-const authenticateToken = require('../middleware/auth');
-const { isReviewer } = require('../middleware/reviewerMiddleware');
+const adminController = require('../controllers/admin.controller');
+const authMiddleware = require('../middleware/auth');
+const { isAdmin } = require('../middleware/admin.middleware');
 
-// Apply authentication and reviewer middleware to all routes
-router.use(authenticateToken);
-router.use(isReviewer);
+// All routes require authentication and reviewer/admin role
+router.use(authMiddleware);
+router.use(isAdmin); // This middleware allows both ADMIN and REVIEWER
 
-// Dashboard routes
-router.get('/dashboard/statistics', reviewerController.getDashboardStatistics);
-
-// Order routes
-router.get('/orders', reviewerController.getAllOrders);
-
-// Job routes
-router.get('/jobs/pending', reviewerController.getPendingJobs);
-router.get('/jobs', reviewerController.getAllJobs);
-router.put('/jobs/:jobId/approve', reviewerController.approveJob);
-router.put('/jobs/:jobId/reject', reviewerController.rejectJob);
-
-// Review routes
-router.get('/reviews/pending', reviewerController.getPendingReviews);
-router.get('/reviews', reviewerController.getAllReviews);
-router.put('/reviews/:reviewId/approve', reviewerController.approveReview);
-router.put('/reviews/:reviewId/reject', reviewerController.rejectReview);
-
-// Report routes
-router.get('/reports/yearly', reviewerController.getYearlyReport);
-router.get('/reports/download/:format', reviewerController.downloadReport);
+// Job management routes for reviewers
+router.get('/jobs', adminController.getAllJobs);
+router.get('/jobs/:jobId', adminController.getJobById);
+router.put('/jobs/:jobId/approve', adminController.approveJob);
+router.put('/jobs/:jobId/reject', adminController.rejectJob);
 
 module.exports = router;

@@ -39,7 +39,8 @@ export default function WorkerOrders() {
   const fetchDirectHireRequests = async () => {
     try {
       setDirectHireLoading(true);
-      const response = await axiosInstance.get('/api/direct-hire/requests?status=PENDING');
+      // Fetch both PENDING and ACCEPTED direct hire requests
+      const response = await axiosInstance.get('/api/direct-hire/requests?status=PENDING,ACCEPTED');
       console.log("Direct Hire Requests:", response.data);
       setDirectHireRequests(response.data.data?.requests || response.data.requests || []);
       setDirectHireLoading(false);
@@ -111,8 +112,9 @@ export default function WorkerOrders() {
       toast.success("Order started successfully!");
       handleCloseStartModal();
 
-      // Refresh orders list
+      // Refresh both orders list and direct hire requests
       fetchWorkerOrders();
+      fetchDirectHireRequests();
     } catch (error) {
       console.error("Error starting order:", error);
       toast.error(error.response?.data?.message || "Failed to start order");
@@ -132,8 +134,9 @@ export default function WorkerOrders() {
       toast.success("Order completed successfully!");
       handleCloseCompleteModal();
 
-      // Refresh orders list
+      // Refresh both orders list and direct hire requests
       fetchWorkerOrders();
+      fetchDirectHireRequests();
     } catch (error) {
       console.error("Error completing order:", error);
       toast.error(error.response?.data?.message || "Failed to complete order");
@@ -453,6 +456,8 @@ export default function WorkerOrders() {
                       request={request}
                       onAccept={handleAcceptDirectHire}
                       onReject={handleRejectDirectHire}
+                      onStartWork={(orderId) => handleShowStartModal({ id: orderId, job: request.job })}
+                      onCompleteWork={(orderId) => handleShowCompleteModal({ id: orderId, job: request.job })}
                     />
                   ))}
                 </div>

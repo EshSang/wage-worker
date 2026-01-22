@@ -137,13 +137,10 @@ class OrderService {
    * @returns {Promise<Array>} List of orders
    */
   async getOrdersByWorkerId(userId) {
-    // Get all orders for the worker (excluding completed ones)
+    // Get all orders for the worker (including completed ones)
     const orders = await prisma.order.findMany({
       where: {
-        userId,
-        status: {
-          not: 'COMPLETED' // Exclude completed orders
-        }
+        userId
       },
       include: {
         job: {
@@ -167,8 +164,21 @@ class OrderService {
       },
     });
 
-    // Get IDs of applications that already have non-completed orders
-    const applicationIdsWithOrders = orders.map(order => order.jobApplicationId).filter(Boolean);
+    // Sort orders: non-completed orders first, then completed orders
+    const sortedOrders = orders.sort((a, b) => {
+      // If both have same status, maintain order by acceptedDate (already sorted)
+      if (a.status === b.status) return 0;
+      // Put completed orders at the bottom
+      if (a.status === 'COMPLETED') return 1;
+      if (b.status === 'COMPLETED') return -1;
+      return 0;
+    });
+
+    // Get IDs of applications that already have non-completed orders (exclude completed orders)
+    const applicationIdsWithOrders = sortedOrders
+      .filter(order => order.status !== 'COMPLETED')
+      .map(order => order.jobApplicationId)
+      .filter(Boolean);
 
     // Get pending job applications that don't have non-completed orders yet
     const pendingApplications = await prisma.jobApplication.findMany({
@@ -217,7 +227,7 @@ class OrderService {
     }));
 
     // Combine and sort by date
-    const allOrders = [...orders, ...pendingOrders].sort((a, b) => {
+    const allOrders = [...sortedOrders, ...pendingOrders].sort((a, b) => {
       const dateA = new Date(a.acceptedDate || a.appliedDate);
       const dateB = new Date(b.acceptedDate || b.appliedDate);
       return dateB - dateA; // Most recent first

@@ -44,7 +44,8 @@ export default function ReviewerJobs() {
       });
 
       if (response.data.success) {
-        setJobs(response.data.data);
+        // The response contains { jobs, pagination }
+        setJobs(response.data.data.jobs || response.data.data);
       }
     } catch (error) {
       console.error('Error fetching jobs:', error);

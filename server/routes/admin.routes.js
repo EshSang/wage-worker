@@ -23,6 +23,8 @@ router.delete('/users/:userId', adminController.deleteUser);
 
 // Job management routes
 router.get('/jobs/statistics', adminController.getJobStatistics);
+router.put('/jobs/:jobId/approve', adminController.approveJob);
+router.put('/jobs/:jobId/reject', adminController.rejectJob);
 router.get('/jobs/:jobId', adminController.getJobById);
 router.get('/jobs', adminController.getAllJobs);
 

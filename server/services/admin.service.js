@@ -1,6 +1,7 @@
 const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcrypt');
 const prisma = new PrismaClient();
+const { syncWorkerToKnowledgeBase, removeWorkerFromKnowledgeBase } = require('./ai.service');
 
 /**
  * Get all users with filters and pagination
@@ -190,6 +191,12 @@ async function createUser(userData) {
     });
 
     console.log('User created successfully:', user.id);
+
+    // Sync user to AI knowledge base (non-blocking)
+    syncWorkerToKnowledgeBase(user.id).catch(err => {
+      console.error('Failed to sync new user to knowledge base:', err);
+    });
+
     return user;
   } catch (error) {
     console.error('Error in createUser:', error);
@@ -261,6 +268,12 @@ async function updateUser(userId, userData) {
     });
 
     console.log('User updated successfully:', user.id);
+
+    // Sync updated user to AI knowledge base (non-blocking)
+    syncWorkerToKnowledgeBase(user.id).catch(err => {
+      console.error('Failed to sync updated user to knowledge base:', err);
+    });
+
     return user;
   } catch (error) {
     console.error('Error in updateUser:', error);
@@ -320,6 +333,11 @@ async function deleteUser(userId) {
       where: { id: parseInt(userId) }
     });
 
+    // Remove user from AI knowledge base (non-blocking)
+    removeWorkerFromKnowledgeBase(parseInt(userId)).catch(err => {
+      console.error('Failed to remove user from knowledge base:', err);
+    });
+
     console.log('User deleted successfully:', userId);
     return { message: 'User deleted successfully' };
   } catch (error) {
@@ -333,7 +351,7 @@ async function deleteUser(userId) {
  */
 async function getAllJobs(filters = {}) {
   try {
-    const { search, status, categoryId, date, page = 1, limit = 20 } = filters;
+    const { search, status, categoryId, date, approvalStatus, page = 1, limit = 20 } = filters;
 
     const where = {};
 
@@ -355,6 +373,11 @@ async function getAllJobs(filters = {}) {
     // Status filter
     if (status && status !== 'All') {
       where.status = status;
+    }
+
+    // Approval status filter (for reviewers)
+    if (approvalStatus && approvalStatus !== 'All') {
+      where.approvalStatus = approvalStatus;
     }
 
     // Category filter
@@ -744,6 +767,102 @@ async function getRecentJobRequests(limit = 10) {
   }
 }
 
+/**
+ * Approve a job
+ */
+async function approveJob(jobId, reviewerId, notes = '') {
+  try {
+    const job = await prisma.job.findUnique({
+      where: { id: jobId },
+    });
+
+    if (!job) {
+      throw new Error('Job not found');
+    }
+
+    if (job.approvalStatus !== 'PENDING' && job.approvalStatus !== 'CHANGES_REQUESTED') {
+      throw new Error('Job is not in reviewable status');
+    }
+
+    const updatedJob = await prisma.job.update({
+      where: { id: jobId },
+      data: {
+        approvalStatus: 'APPROVED',
+        reviewedBy: reviewerId,
+        reviewedAt: new Date(),
+        status: 'Open', // Make job active
+      },
+      include: {
+        category: true,
+        createdUser: {
+          select: {
+            id: true,
+            fname: true,
+            lname: true,
+            email: true,
+          }
+        },
+      }
+    });
+
+    console.log(`Job ${jobId} approved by reviewer ${reviewerId}`);
+    return updatedJob;
+  } catch (error) {
+    console.error('Error in approveJob:', error);
+    throw error;
+  }
+}
+
+/**
+ * Reject a job
+ */
+async function rejectJob(jobId, reviewerId, reason) {
+  try {
+    if (!reason || reason.trim() === '') {
+      throw new Error('Rejection reason is required');
+    }
+
+    const job = await prisma.job.findUnique({
+      where: { id: jobId },
+    });
+
+    if (!job) {
+      throw new Error('Job not found');
+    }
+
+    if (job.approvalStatus !== 'PENDING' && job.approvalStatus !== 'CHANGES_REQUESTED') {
+      throw new Error('Job is not in reviewable status');
+    }
+
+    const updatedJob = await prisma.job.update({
+      where: { id: jobId },
+      data: {
+        approvalStatus: 'REJECTED',
+        reviewedBy: reviewerId,
+        reviewedAt: new Date(),
+        status: 'Closed', // Close the job
+      },
+      include: {
+        category: true,
+        createdUser: {
+          select: {
+            id: true,
+            fname: true,
+            lname: true,
+            email: true,
+          }
+        },
+      }
+    });
+
+    console.log(`Job ${jobId} rejected by reviewer ${reviewerId}`);
+    return updatedJob;
+  } catch (error) {
+    console.error('Error in rejectJob:', error);
+    throw error;
+  }
+}
+
 module.exports = {
   getAllUsers,
   getUserStatistics,
@@ -754,6 +873,8 @@ module.exports = {
   getAllJobs,
   getJobStatistics,
   getJobById,
+  approveJob,
+  rejectJob,
   getAllEarnings,
   getEarningsStatistics,
   getDashboardStatistics,

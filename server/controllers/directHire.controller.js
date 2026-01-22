@@ -170,15 +170,22 @@ async function rejectDirectHireRequest(req, res) {
 /**
  * Get worker's direct hire requests
  * GET /api/direct-hire/requests?status=PENDING
+ * GET /api/direct-hire/requests?status=PENDING,ACCEPTED (for multiple statuses)
  */
 async function getWorkerRequests(req, res) {
   try {
     const workerId = req.user.id;
     const { status } = req.query;
 
+    // Handle comma-separated status values
+    let statusParam = status || 'PENDING';
+    if (typeof statusParam === 'string' && statusParam.includes(',')) {
+      statusParam = statusParam.split(',').map(s => s.trim());
+    }
+
     const requests = await directHireService.getWorkerDirectHireRequests(
       workerId,
-      status || 'PENDING'
+      statusParam
     );
 
     res.status(200).json({

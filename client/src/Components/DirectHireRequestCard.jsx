@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Card, Badge, Row, Col, Button, Modal, Form } from 'react-bootstrap';
-import { FaBolt, FaMapMarkerAlt, FaBriefcase, FaPhone, FaEnvelope, FaRegCalendarAlt, FaCheck, FaTimes } from 'react-icons/fa';
+import { FaBolt, FaMapMarkerAlt, FaBriefcase, FaPhone, FaEnvelope, FaRegCalendarAlt, FaCheck, FaTimes, FaPlay, FaCheckCircle, FaHourglassHalf } from 'react-icons/fa';
 
-const DirectHireRequestCard = ({ request, onAccept, onReject }) => {
+const DirectHireRequestCard = ({ request, onAccept, onReject, onStartWork, onCompleteWork }) => {
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
 
@@ -12,16 +12,53 @@ const DirectHireRequestCard = ({ request, onAccept, onReject }) => {
     setRejectReason('');
   };
 
+  const isPending = request.applicationStatus === 'PENDING';
+  const isAccepted = request.applicationStatus === 'ACCEPTED';
+  const order = request.orders && request.orders.length > 0 ? request.orders[0] : null;
+
+  const canStartOrder = (order) => {
+    return order && order.status === 'ACCEPTED' && !order.startedDate;
+  };
+
+  const canCompleteOrder = (order) => {
+    return order && order.status === 'ACCEPTED' && order.startedDate && !order.completedDate;
+  };
+
+  const getStatusColor = () => {
+    if (isPending) return 'warning';
+    if (isAccepted && order) {
+      if (order.status === 'COMPLETED') return 'success';
+      if (order.startedDate) return 'info';
+      return 'primary';
+    }
+    return 'secondary';
+  };
+
+  const getStatusText = () => {
+    if (isPending) return 'PENDING YOUR ACCEPTANCE';
+    if (isAccepted && order) {
+      if (order.status === 'COMPLETED') return 'COMPLETED';
+      if (order.startedDate) return 'IN PROGRESS';
+      return 'ACCEPTED - READY TO START';
+    }
+    return 'ACCEPTED';
+  };
+
   return (
     <>
       <Card className="mb-3 border-0 shadow-sm">
         <Card.Body>
           <div className="d-flex justify-content-between mb-3">
-            <div>
-              <Badge bg="warning" className="mb-2">
-                <FaBolt className="me-1" />
-                DIRECT HIRE REQUEST
-              </Badge>
+            <div className="flex-grow-1">
+              <div className="d-flex align-items-center gap-2 mb-2">
+                <Badge bg={getStatusColor()}>
+                  <FaBolt className="me-1" />
+                  DIRECT HIRE
+                </Badge>
+                <Badge bg={getStatusColor()} className="px-3">
+                  {getStatusText()}
+                </Badge>
+              </div>
               <h5 className="text-info mb-2">{request.job.title}</h5>
               <p className="text-muted mb-0">{request.job.description}</p>
             </div>
@@ -61,23 +98,80 @@ const DirectHireRequestCard = ({ request, onAccept, onReject }) => {
             </Col>
           </Row>
 
+          {/* Show order timeline info for accepted requests */}
+          {isAccepted && order && (
+            <div className="mt-3 p-3 bg-light rounded">
+              <div className="small">
+                {order.acceptedDate && (
+                  <div className="mb-1">
+                    <strong>Accepted:</strong> {new Date(order.acceptedDate).toLocaleDateString()}
+                  </div>
+                )}
+                {order.startedDate && (
+                  <div className="mb-1 text-info">
+                    <strong>Started:</strong> {new Date(order.startedDate).toLocaleDateString()}
+                  </div>
+                )}
+                {order.completedDate && (
+                  <div className="mb-1 text-success">
+                    <strong>Completed:</strong> {new Date(order.completedDate).toLocaleDateString()}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Action buttons based on status */}
           <div className="d-flex gap-2 mt-4">
-            <Button
-              variant="success"
-              onClick={() => onAccept(request.id)}
-              className="flex-grow-1"
-            >
-              <FaCheck className="me-2" />
-              Accept Job Request
-            </Button>
-            <Button
-              variant="outline-danger"
-              onClick={() => setShowRejectModal(true)}
-              className="flex-grow-1"
-            >
-              <FaTimes className="me-2" />
-              Decline
-            </Button>
+            {isPending && (
+              <>
+                <Button
+                  variant="success"
+                  onClick={() => onAccept(request.id)}
+                  className="flex-grow-1"
+                >
+                  <FaCheck className="me-2" />
+                  Accept Job Request
+                </Button>
+                <Button
+                  variant="outline-danger"
+                  onClick={() => setShowRejectModal(true)}
+                  className="flex-grow-1"
+                >
+                  <FaTimes className="me-2" />
+                  Decline
+                </Button>
+              </>
+            )}
+
+            {isAccepted && order && canStartOrder(order) && (
+              <Button
+                variant="success"
+                onClick={() => onStartWork(order.id)}
+                className="flex-grow-1"
+              >
+                <FaPlay className="me-2" />
+                Start Work
+              </Button>
+            )}
+
+            {isAccepted && order && canCompleteOrder(order) && (
+              <Button
+                variant="primary"
+                onClick={() => onCompleteWork(order.id)}
+                className="flex-grow-1"
+              >
+                <FaCheckCircle className="me-2" />
+                Complete Work
+              </Button>
+            )}
+
+            {isAccepted && order && order.status === 'COMPLETED' && (
+              <Badge bg="success" className="px-4 py-3 w-100 text-center">
+                <FaCheckCircle className="me-2" />
+                Work Completed Successfully
+              </Badge>
+            )}
           </div>
         </Card.Body>
       </Card>

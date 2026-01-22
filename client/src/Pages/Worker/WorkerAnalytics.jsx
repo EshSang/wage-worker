@@ -278,7 +278,7 @@ export default function WorkerAnalytics() {
               disabled={downloading}
             >
               <FaDownload className="me-2" />
-              {downloading ? 'Downloading...' : 'Download JSON'}
+              {downloading ? 'Downloading...' : 'Download Excel'}
             </Button>
           </div>
         </div>

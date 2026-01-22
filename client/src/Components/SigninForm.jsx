@@ -63,12 +63,21 @@ function SigninForm() {
 
       // Navigate based on user type
       const userType = res.data.user.usertype;
-      if (userType === "ADMIN") {
+      console.log("🔍 User type from response:", userType);
+
+      // Convert to uppercase for case-insensitive comparison
+      const userTypeUpper = userType?.toUpperCase();
+      console.log("🔍 User type (uppercase):", userTypeUpper);
+
+      if (userTypeUpper === "ADMIN") {
+        console.log("✅ Navigating to admin dashboard");
         navigate("/admin/dashboard");
-      } else if (userType === "REVIEWER") {
+      } else if (userTypeUpper === "REVIEWER") {
+        console.log("✅ Navigating to reviewer dashboard");
         navigate("/reviewer/dashboard");
       } else {
         // Default navigation for other user types (USER, etc.)
+        console.log("✅ Navigating to home (userType:", userType, ")");
         navigate("/home");
       }
     } catch (err) {

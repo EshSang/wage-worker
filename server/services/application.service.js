@@ -94,9 +94,10 @@ class ApplicationService {
   /**
    * Get all applications for jobs posted by a user (customer view)
    * Excludes DIRECT_HIRE applications since those appear in "Hired Workers" tab
+   * Excludes applications that already have orders (those appear in "Accepted / In Progress" tab)
    */
   async getApplicationsForUserJobs(userId) {
-    return await prisma.jobApplication.findMany({
+    const applications = await prisma.jobApplication.findMany({
       where: {
         job: {
           createdUserId: userId
@@ -127,12 +128,27 @@ class ApplicationService {
             skills: true,
             about: true
           }
+        },
+        orders: {
+          select: {
+            id: true,
+            status: true
+          }
         }
       },
       orderBy: {
         appliedDate: 'desc'
       }
     });
+
+    // Filter out applications that already have orders (they appear in "Accepted / In Progress" tab)
+    const applicationsWithoutOrders = applications.filter(app => !app.orders || app.orders.length === 0);
+
+    // Add hasOrder flag to each application (will always be false now, but kept for consistency)
+    return applicationsWithoutOrders.map(app => ({
+      ...app,
+      hasOrder: false
+    }));
   }
 
   /**

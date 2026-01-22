@@ -65,6 +65,7 @@ class JobController {
             hourlyRate: parseInt(hourlyRate),
             status: 'Open',
             createdUserId: req.user.id
+            // approvalStatus will use default value from schema (PENDING)
           },
           include: {
             category: true,

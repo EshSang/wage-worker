@@ -1,15 +1,51 @@
-import React, { useState } from "react";
-import { Navbar, Nav, Container, Form } from "react-bootstrap";
+import React, { useState, useEffect } from "react";
+import { Navbar, Nav, Container, Form, Button } from "react-bootstrap";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Robot } from "react-bootstrap-icons";
 import ProfileModal from "./ProfileModal";
 import NotificationBell from "./NotificationBell";
+import AIChat from "./AIChat";
+import { useAuth } from "../context/AuthContext";
+import axiosInstance from "../api/axios";
 
 export default function TopNavbar() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showAIChat, setShowAIChat] = useState(false);
+  const [userProfile, setUserProfile] = useState(null);
 
   const { selectedType: stateSelectedType } = location.state || {};
+
+  // Fetch user profile data
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      try {
+        const response = await axiosInstance.get('/api/auth/profile');
+        if (response.data.user) {
+          setUserProfile(response.data.user);
+        }
+      } catch (error) {
+        console.error('Error fetching user profile:', error);
+      }
+    };
+
+    if (user) {
+      fetchUserProfile();
+    }
+  }, [user]);
+
+  // Get user's full name
+  const getUserFullName = () => {
+    if (userProfile?.fname && userProfile?.lname) {
+      return `${userProfile.fname} ${userProfile.lname}`;
+    }
+    if (user?.email) {
+      return user.email.split('@')[0]; // Fallback to email username
+    }
+    return 'User';
+  };
 
   const normalizeRole = (r) => {
     if (!r) return r;
@@ -161,13 +197,24 @@ export default function TopNavbar() {
                 </div>
               )}
 
+              {/* AI CHAT BUTTON */}
+              <Button
+                variant="outline-primary"
+                size="sm"
+                className="d-flex align-items-center gap-1"
+                onClick={() => setShowAIChat(true)}
+              >
+                <Robot size={18} />
+                <span className="d-none d-md-inline">AI Assistant</span>
+              </Button>
+
               {/* NOTIFICATION BELL */}
               <NotificationBell />
 
               {/* PROFILE */}
               <div className="d-flex align-items-center">
                 <span className="me-2 small text-muted">Hello,</span>
-                <span className="fw-medium me-3">Eshana Sangeeth</span>
+                <span className="fw-medium me-3">{getUserFullName()}</span>
                 <button
                   onClick={() => setShowProfileModal(true)}
                   className="bg-transparent border-0 p-0"
@@ -191,6 +238,12 @@ export default function TopNavbar() {
       <ProfileModal
         show={showProfileModal}
         onHide={() => setShowProfileModal(false)}
+      />
+
+      {/* AI CHAT SIDEBAR */}
+      <AIChat
+        show={showAIChat}
+        onHide={() => setShowAIChat(false)}
       />
     </div>
   );

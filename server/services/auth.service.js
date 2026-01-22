@@ -1,4 +1,5 @@
 const prisma = require('../config/prisma');
+const { syncWorkerToKnowledgeBase } = require('./ai.service');
 
 class AuthService {
   /**
@@ -14,9 +15,16 @@ class AuthService {
    * Create a new user
    */
   async createUser(userData) {
-    return await prisma.user.create({
+    const user = await prisma.user.create({
       data: userData
     });
+
+    // Sync user to AI knowledge base (non-blocking)
+    syncWorkerToKnowledgeBase(user.id).catch(err => {
+      console.error('Failed to sync new user to knowledge base:', err);
+    });
+
+    return user;
   }
 
   /**
@@ -50,6 +58,11 @@ class AuthService {
     });
 
     console.log(`[${new Date().toISOString()}] AuthService.updateUser - Update result:`, result);
+
+    // Sync updated user to AI knowledge base (non-blocking)
+    syncWorkerToKnowledgeBase(userId).catch(err => {
+      console.error('Failed to sync updated user to knowledge base:', err);
+    });
 
     return result;
   }

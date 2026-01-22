@@ -195,18 +195,19 @@ async function deleteUser(req, res) {
 }
 
 /**
- * Get all jobs with filters (Admin)
- * GET /api/admin/jobs?search=plumbing&status=Open&categoryId=1&date=2025-12-20&page=1&limit=20
+ * Get all jobs with filters (Admin/Reviewer)
+ * GET /api/admin/jobs?search=plumbing&status=Open&categoryId=1&date=2025-12-20&approvalStatus=PENDING&page=1&limit=20
  */
 async function getAllJobs(req, res) {
   try {
-    const { search, status, categoryId, date, page, limit } = req.query;
+    const { search, status, categoryId, date, approvalStatus, page, limit } = req.query;
 
     const filters = {};
     if (search) filters.search = search;
     if (status) filters.status = status;
     if (categoryId) filters.categoryId = categoryId;
     if (date) filters.date = date;
+    if (approvalStatus) filters.approvalStatus = approvalStatus;
     if (page) filters.page = parseInt(page);
     if (limit) filters.limit = parseInt(limit);
 
@@ -381,6 +382,79 @@ async function getRecentJobRequests(req, res) {
   }
 }
 
+/**
+ * Approve a job (Admin/Reviewer)
+ * PUT /api/admin/jobs/:jobId/approve
+ */
+async function approveJob(req, res) {
+  try {
+    const { jobId } = req.params;
+    const notes = req.body?.notes || '';
+    const reviewerId = req.user.id;
+
+    if (!jobId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Job ID is required',
+      });
+    }
+
+    const job = await adminService.approveJob(parseInt(jobId), reviewerId, notes);
+
+    res.status(200).json({
+      success: true,
+      message: 'Job approved successfully',
+      data: job,
+    });
+  } catch (error) {
+    console.error('Approve job error:', error);
+    res.status(400).json({
+      success: false,
+      message: error.message || 'Failed to approve job',
+    });
+  }
+}
+
+/**
+ * Reject a job (Admin/Reviewer)
+ * PUT /api/admin/jobs/:jobId/reject
+ */
+async function rejectJob(req, res) {
+  try {
+    const { jobId } = req.params;
+    const { reason } = req.body;
+    const reviewerId = req.user.id;
+
+    if (!jobId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Job ID is required',
+      });
+    }
+
+    if (!reason) {
+      return res.status(400).json({
+        success: false,
+        message: 'Rejection reason is required',
+      });
+    }
+
+    const job = await adminService.rejectJob(parseInt(jobId), reviewerId, reason);
+
+    res.status(200).json({
+      success: true,
+      message: 'Job rejected successfully',
+      data: job,
+    });
+  } catch (error) {
+    console.error('Reject job error:', error);
+    res.status(400).json({
+      success: false,
+      message: error.message || 'Failed to reject job',
+    });
+  }
+}
+
 module.exports = {
   getAllUsers,
   getUserStatistics,
@@ -391,6 +465,8 @@ module.exports = {
   getAllJobs,
   getJobStatistics,
   getJobById,
+  approveJob,
+  rejectJob,
   getAllEarnings,
   getEarningsStatistics,
   getDashboardStatistics,

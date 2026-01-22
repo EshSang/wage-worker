@@ -293,7 +293,7 @@ export default function CustomerAnalytics() {
               disabled={downloading}
             >
               <FaDownload className="me-2" />
-              {downloading ? 'Downloading...' : 'Download JSON'}
+              {downloading ? 'Downloading...' : 'Download Excel'}
             </Button>
           </div>
         </div>

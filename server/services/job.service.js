@@ -2,7 +2,8 @@ const prisma = require('../config/prisma');
 
 class JobService {
   /**
-   * Get all available jobs
+   * Get all available jobs (shows all jobs for now)
+   * TODO: Filter by approvalStatus once database is migrated
    */
   async getAllJobs() {
     return await prisma.job.findMany({
