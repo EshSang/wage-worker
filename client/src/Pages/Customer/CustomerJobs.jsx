@@ -196,13 +196,13 @@ const CustomerJobs = () => {
           >
             Browse Workers
           </Button>
-          <Button
+          {/* <Button
             variant={activeTab === "best" ? "info" : "outline-info"}
             className="rounded-pill px-4"
             onClick={() => setActiveTab("best")}
           >
             Browse Jobs
-          </Button>
+          </Button> */}
         </div>
 
         {/* ---------------- BEST MATCH INPUT ---------------- */}

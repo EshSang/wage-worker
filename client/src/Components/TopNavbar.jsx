@@ -197,16 +197,18 @@ export default function TopNavbar() {
                 </div>
               )}
 
-              {/* AI CHAT BUTTON */}
-              <Button
-                variant="outline-primary"
-                size="sm"
-                className="d-flex align-items-center gap-1"
-                onClick={() => setShowAIChat(true)}
-              >
-                <Robot size={18} />
-                <span className="d-none d-md-inline">AI Assistant</span>
-              </Button>
+              {/* AI CHAT BUTTON - Only visible for Customer role */}
+              {userRole === "Customer" && (
+                <Button
+                  variant="outline-primary"
+                  size="sm"
+                  className="d-flex align-items-center gap-1"
+                  onClick={() => setShowAIChat(true)}
+                >
+                  <Robot size={18} />
+                  <span className="d-none d-md-inline">AI Assistant</span>
+                </Button>
+              )}
 
               {/* NOTIFICATION BELL */}
               <NotificationBell />

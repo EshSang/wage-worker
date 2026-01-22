@@ -16,9 +16,9 @@ const AI_CONFIG = {
   }
 };
 
-// ============================================
+
 // DYNAMIC KNOWLEDGE BASE MANAGEMENT
-// ============================================
+
 
 // In-memory cache for workers knowledge base
 let WORKERS_KNOWLEDGE_BASE = [];
